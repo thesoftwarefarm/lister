@@ -1,5 +1,5 @@
 {
-    "name": "Lister",
+    "name": "tsfcorp/lister",
     "type": "library",
     "description": "Listing library for Laravel",
     "keywords": [
