@@ -32,7 +32,7 @@ class Lister
         $this->db = $db;
 
         $this->current_page = $this->request->get('page', $this->current_page);
-        $this->results_per_page = $this->request->get('rpp', $this->results_per_page) ?? config('lister.results_per_page');
+        $this->results_per_page = $this->request->get('rpp') ?? config('lister.results_per_page');
         $this->offset = $this->computeOffset();
     }
 
