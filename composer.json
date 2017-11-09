@@ -1,0 +1,59 @@
+{
+    "name": "Lister",
+    "type": "library",
+    "description": "Listing library for Laravel",
+    "keywords": [
+        "laravel",
+        "listing",
+        "php"
+    ],
+    "homepage": "https://github.com/tsfcop/lister",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Emi Polak",
+            "email": "emi.tsf@gmail.com"
+        },
+        {
+            "name": "Marian Perca",
+            "email": "marian.perca@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "illuminate/database": "^5.4",
+        "illuminate/http": "^5.4",
+        "illuminate/pagination": "^5.4",
+        "illuminate/session": "^5.4",
+        "illuminate/support": "^5.4"
+    },
+    "require-dev": {
+        "fzaninotto/faker": "^1.7",
+        "phpunit/phpunit" : "^5.7|6.2",
+        "orchestra/testbench": "~3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TsfCorp\\Lister\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TsfCorp\\Lister\\Test\\": "tests"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TsfCorp\\Lister\\ListerServiceProvider"
+            ],
+            "aliases": {
+                "Lister": "TsfCorp\\Lister\\Facades\\Lister"
+            }
+        }
+    }
+}
