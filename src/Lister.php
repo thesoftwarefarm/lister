@@ -441,4 +441,20 @@ class Lister
 
         return false;
     }
+
+    /**
+     * Returns an URL to redirect to if either:
+     *  - there is a remembered URL in session
+     *  - query string clean up has been performed
+     *
+     * @return null|string
+     */
+    public function getRedirectUrl()
+    {
+        if($remembered = $this->rememberFilters()) return $remembered;
+
+        if($clean_query_string = $this->cleanQueryString()) return $clean_query_string;
+
+        return NULL;
+    }
 }

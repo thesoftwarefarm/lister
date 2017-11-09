@@ -51,9 +51,8 @@ $listing = $lister->make($query_settings)->get();
 * each item from `filters` param, will be added to `WHERE` clause. If the condition has a parameter specified in curly braces, we'll search for that parameter in the request and replace the parameter with value found.
 
 
-If using remembered filters and also for query string cleanup, the following are needed at the top of the method used:
+If using remembered filters and also for query string cleanup, this is needed at the top of the method used:
 ```php
-if ($remembered = $lister->rememberFilters()) return redirect($remembered);
-if ($clean_query_string = $lister->cleanQueryString()) return redirect($clean_query_string);
+if($redirect_url = $lister->getRedirectUrl()) return redirect($redirect_url);
 ```
 
