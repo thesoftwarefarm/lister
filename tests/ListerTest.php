@@ -4,6 +4,7 @@ namespace TsfCorp\Lister\Test;
 
 use Faker\Factory;
 use Illuminate\Database\Connection;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Orchestra\Testbench\TestCase;
@@ -12,6 +13,8 @@ use TsfCorp\Lister\Test\Migrations\CreateTestingUsersTable;
 
 class ListerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function setUp()
     {
         parent::setUp();
@@ -116,6 +119,54 @@ class ListerTest extends TestCase
         $this->assertTrue($user->email == $filter_email);
     }
 
+    public function testEmptyFilter()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'filters' => [
+                "email LIKE '{filter_email}'",
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $request = new Request([], [], ['filter_email' => '']);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $listing = $lister->make($query_settings)->get();
+
+        $this->assertFalse($listing->isFiltered());
+    }
+
+    public function testZeroNumberFilter()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'filters' => [
+                "id = {filter_id}",
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $request = new Request([], [], ['filter_id' => 0]);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $listing = $lister->make($query_settings)->get();
+
+        $this->assertTrue($listing->isFiltered());
+    }
+
     public function testFilterArray()
     {
         $query_settings = [
@@ -157,6 +208,7 @@ class ListerTest extends TestCase
      */
     protected function getEnvironmentSetUp($app)
     {
+        $app['config']->set('lister.results_per_page', 10);
         $app['config']->set('database.default', 'mysql');
         $app['config']->set('database.connections.mysql', [
             'driver' => 'mysql',

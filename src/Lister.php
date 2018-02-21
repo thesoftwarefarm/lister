@@ -104,7 +104,6 @@ class Lister
      * Builds and returns an SQL query that combines filters, sorting rules and pagination settings.
      *
      * @return string
-     * @throws \ErrorException
      */
     private function buildQuery()
     {
@@ -153,7 +152,7 @@ class Lister
                 $filter_name = $matches[1];
                 $filter_value = $this->request->get($filter_name);
 
-                if (!empty($filter_value)) {
+                if (!empty($filter_value) || is_numeric($filter_value)) {
                     $this->filters_applied = true;
 
                     if (is_array($filter_value)) {
@@ -178,7 +177,6 @@ class Lister
      * Get sort field and direction
      *
      * @return int|mixed|string
-     * @throws \ErrorException
      */
     private function getSortBy()
     {
@@ -202,12 +200,7 @@ class Lister
         // when sorting by a field that doesn't exist, an exception is thrown;
         // if the filters are "remembered", the user can't recover by changing the URL;
         // to mitigate this, the exception is catched, and thrown again after clearing the filters.
-        try {
-            $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
-        } catch (\ErrorException $e) {
-            $this->forgetFilters();
-            throw $e;
-        }
+        $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
 
         return $sort_field;
     }
