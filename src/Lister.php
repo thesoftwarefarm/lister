@@ -248,6 +248,7 @@ class Lister
     public function setResultsPerPage($results_per_page)
     {
         $this->results_per_page = (int)$results_per_page;
+        $this->offset = $this->computeOffset();
     }
 
     /**
