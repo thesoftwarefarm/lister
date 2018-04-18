@@ -207,7 +207,12 @@ class Lister
         // when sorting by a field that doesn't exist, an exception is thrown;
         // if the filters are "remembered", the user can't recover by changing the URL;
         // to mitigate this, the exception is catched, and thrown again after clearing the filters.
-        $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
+        try {
+            $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
+        } catch (\ErrorException $e) {
+            $this->forgetFilters();
+            throw $e;
+        }
 
         return $sort_field;
     }
@@ -250,6 +255,7 @@ class Lister
     public function setResultsPerPage($results_per_page)
     {
         $this->results_per_page = (int)$results_per_page;
+        $this->offset = $this->computeOffset();
     }
 
     /**
