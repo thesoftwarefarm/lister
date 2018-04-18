@@ -5,6 +5,7 @@ namespace TsfCorp\Lister;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class Lister
@@ -36,9 +37,9 @@ class Lister
         $this->offset = $this->computeOffset();
     }
 
-    public function setConnection(Connection $db)
+    public function setConnection($connection_name)
     {
-        $this->db = $db;
+        $this->db = DB::connection($connection_name);
 
         return $this;
     }

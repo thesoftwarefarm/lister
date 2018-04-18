@@ -208,7 +208,7 @@ class ListerTest extends TestCase
         ];
 
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
-        $listing = $lister->setConnection(DB::connection('other_conn'))->make($query_settings)->get();
+        $listing = $lister->setConnection('other_conn')->make($query_settings)->get();
 
         $this->assertTrue($listing->getResults()->count() == 1);
     }
