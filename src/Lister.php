@@ -36,6 +36,13 @@ class Lister
         $this->offset = $this->computeOffset();
     }
 
+    public function setConnection(Connection $db)
+    {
+        $this->db = $db;
+
+        return $this;
+    }
+
     /**
      * Returns the offset needed for executing the query,
      * given the current 'results per page'/'current page' configuration.

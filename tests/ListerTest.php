@@ -7,6 +7,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase;
 use TsfCorp\Lister\Lister;
 use TsfCorp\Lister\Test\Migrations\CreateTestingUsersTable;
@@ -191,6 +192,27 @@ class ListerTest extends TestCase
         $this->assertTrue($listing->getResults()->total() == 2);
     }
 
+    public function testDifferentConnection()
+    {
+        $query_settings = [
+            'fields' => "news.*",
+
+            'body' => "FROM news {filters}",
+
+            'filters' => [
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
+        $listing = $lister->setConnection(DB::connection('other_conn'))->make($query_settings)->get();
+
+        $this->assertTrue($listing->getResults()->count() == 1);
+    }
+
     /**
      * Drop tables
      */
@@ -215,6 +237,15 @@ class ListerTest extends TestCase
             'host' => '127.0.0.1',
             'port' => '3306',
             'database' => 'testing',
+            'username' => 'homestead',
+            'password' => 'secret',
+        ]);
+
+        $app['config']->set('database.connections.other_conn', [
+            'driver' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => '3306',
+            'database' => 'testing_2',
             'username' => 'homestead',
             'password' => 'secret',
         ]);
