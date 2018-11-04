@@ -179,6 +179,8 @@ class Lister
                     }
                 }
             } else {
+                $this->filters_applied = true;
+
                 $filters[] = $filter;
             }
         }

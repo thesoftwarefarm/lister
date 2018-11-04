@@ -122,6 +122,29 @@ class ListerTest extends TestCase
         $this->assertTrue($lister->isFiltered());
     }
 
+    public function testFilterIsFiltered()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'filters' => [
+                "name <> ''",
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $lister = new Lister(new Request(), $this->app->make(Connection::class));
+        $listing = $lister->make($query_settings)->get();
+
+        $this->assertTrue($listing->getResults()->total() > 1);
+        $this->assertTrue($lister->isFiltered());
+    }
+
     public function testEmptyFilter()
     {
         $query_settings = [
