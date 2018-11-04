@@ -120,10 +120,15 @@ class Lister
 
         $query = $this->query_settings['body'];
 
+        // add where?
+        preg_match('/where\s*(.*?\s*and\s*)?\{filters\}/i', $query, $where_matches);
+
         if (count($conditions)) {
-            $query = str_replace('{filters}', ' WHERE ' . implode(' AND ', $this->getWhereClause()), $query);
+            $append_where = count($where_matches) ? '' : ' WHERE ';
+            $query = str_replace('{filters}', $append_where . implode(' AND ', $this->getWhereClause()), $query);
         } else {
-            $query = str_replace('{filters}', '', $query);
+            $empty_filter = count($where_matches) ? ' (1) ' : '';
+            $query = str_replace('{filters}', $empty_filter, $query);
         }
 
         // build query with fields and body
