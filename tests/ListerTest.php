@@ -169,6 +169,32 @@ class ListerTest extends TestCase
         $this->assertFalse($listing->isFiltered());
     }
 
+    public function testWhereFilterMultipleLines()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users WHERE 
+                name <> '' and
+                {filters}",
+
+            'filters' => [
+                "email LIKE '{filter_email}'",
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $request = new Request([], [], ['filter_email' => '']);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $listing = $lister->make($query_settings)->get();
+
+        $this->assertFalse($listing->isFiltered());
+    }
+
     public function testZeroNumberFilter()
     {
         $query_settings = [
@@ -215,6 +241,7 @@ class ListerTest extends TestCase
         $listing = $lister->make($query_settings)->get();
 
         $this->assertTrue($listing->getResults()->total() == 2);
+        $this->assertTrue($listing->isFiltered());
     }
 
     public function testDifferentConnection()
