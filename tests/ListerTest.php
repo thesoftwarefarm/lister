@@ -265,6 +265,32 @@ class ListerTest extends TestCase
         $this->assertTrue($listing->getResults()->count() > 1);
     }
 
+    public function testRecordsAreHydratedIfModelSet()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'filters' => [
+            ],
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+
+            'model' => User::class,
+        ];
+
+        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
+        $listing = $lister->make($query_settings)->get();
+
+        foreach($listing->results as $result)
+        {
+            $this->assertInstanceOf(User::class, $result);
+        }
+    }
+
     /**
      * Drop tables
      */
