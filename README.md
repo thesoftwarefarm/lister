@@ -42,6 +42,11 @@ $query_settings = [
     'sortables' => [
         'name' => 'asc',
     ],
+    
+    // optional, you can pass a model reference and the records returned 
+    // will be of that type
+    
+    'model' => User:class,
 ];
 
 $listing = $lister->make($query_settings)->get();

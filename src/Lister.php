@@ -105,7 +105,16 @@ class Lister
      */
     private function fetchRecords()
     {
-        return $this->db->select($this->buildQuery());
+        $results = $this->db->select($this->buildQuery());
+
+        $model = ! empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
+
+        if ($model && class_exists($model))
+        {
+            return $model::hydrate($results);
+        }
+
+        return $results;
     }
 
     /**
