@@ -480,4 +480,15 @@ class Lister
 
         return NULL;
     }
+
+    /**
+     * Bulid result index to display in listing screens
+     *
+     * @param int $index
+     * @return mixed
+     */
+    public function getResultIndex($index = 0)
+    {
+        return max($index, 0) + 1 + $this->getResultsPerPage() * ($this->current_page - 1);
+    }
 }
