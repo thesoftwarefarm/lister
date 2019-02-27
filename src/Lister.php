@@ -105,7 +105,16 @@ class Lister
      */
     private function fetchRecords()
     {
-        return $this->db->select($this->buildQuery());
+        $results = $this->db->select($this->buildQuery());
+
+        $model = ! empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
+
+        if ($model && class_exists($model))
+        {
+            return $model::hydrate($results);
+        }
+
+        return $results;
     }
 
     /**
@@ -470,5 +479,16 @@ class Lister
         if($clean_query_string = $this->cleanQueryString()) return $clean_query_string;
 
         return NULL;
+    }
+
+    /**
+     * Bulid result index to display in listing screens
+     *
+     * @param int $index
+     * @return mixed
+     */
+    public function getResultIndex($index = 0)
+    {
+        return max($index, 0) + 1 + $this->getResultsPerPage() * ($this->current_page - 1);
     }
 }
