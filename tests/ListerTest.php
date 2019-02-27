@@ -176,6 +176,7 @@ class ListerTest extends TestCase
 
             'body' => "FROM users WHERE 
                 name <> '' and
+                email <> '' and
                 {filters}",
 
             'filters' => [
