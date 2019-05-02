@@ -130,7 +130,7 @@ class Lister
         $query = $this->query_settings['body'];
 
         // add where?
-        preg_match('/where\r?\s+(.+\r*\s+and\r*\s+)?\{filters\}/i', $query, $where_matches);
+        preg_match('/where\r?\s+(.+\r*\s+and\r*\s+)*\{filters\}/i', $query, $where_matches);
 
         if (count($conditions)) {
             $append_where = count($where_matches) ? '' : ' WHERE ';
