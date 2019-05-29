@@ -410,7 +410,7 @@ class Lister
             if (strlen($value) == 0) {
                 $needs_redirect = true;
             } else {
-                $clean_query_string_array[] = $key . '=' . $value;
+                $clean_query_string_array[] = $key . '=' . urlencode($value);
             }
         }
 
