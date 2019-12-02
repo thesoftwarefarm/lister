@@ -387,9 +387,9 @@ class Lister
 
         // reverse $sort_dir for display
         if ($sort_dir == 'asc') {
-            return "sort-desc active";
+            return config('lister.css_clas_sort_asc', 'sort-desc active');
         } elseif ($sort_dir == 'desc') {
-            return "sort-asc active";
+            return config('lister.css_clas_sort_desc', 'sort-asc active');
         } else {
             return "";
         }
