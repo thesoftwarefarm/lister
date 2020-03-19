@@ -2,7 +2,10 @@
 
 namespace TsfCorp\Lister\Filters;
 
-
+/**
+ * Class TextfieldFilter
+ * @package TsfCorp\Lister\Filters
+ */
 class TextfieldFilter extends ListerFilter
 {
     protected $type = self::TYPE_INPUT;

@@ -5,7 +5,6 @@ namespace TsfCorp\Lister;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
-use TsfCorp\Lister\Facades\ListerFilter;
 
 class ListerServiceProvider extends ServiceProvider
 {
@@ -39,11 +38,11 @@ class ListerServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(Lister::class, function ($app) {
+        $this->app->bind('lister', function ($app) {
             return new Lister($app->make(Request::class), $app->make(Connection::class));
         });
 
-        $this->app->singleton(ListerFilterFactory::class, function () {
+        $this->app->singleton('listerfilter', function () {
             return new ListerFilterFactory();
         });
 

@@ -7,6 +7,10 @@ namespace TsfCorp\Lister\Filters;
 use Exception;
 use Illuminate\Support\Str;
 
+/**
+ * Class ListerFilter
+ * @package TsfCorp\Lister\Filters
+ */
 abstract class ListerFilter
 {
     const TYPE_INPUT = "input";

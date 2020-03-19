@@ -3,7 +3,10 @@
 
 namespace TsfCorp\Lister\Filters;
 
-
+/**
+ * Class CheckboxFilter
+ * @package TsfCorp\Lister\Filters
+ */
 class CheckboxFilter extends ListerFilter
 {
     protected $type = self::TYPE_CHECKBOX;

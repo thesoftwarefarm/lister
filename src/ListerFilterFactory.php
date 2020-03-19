@@ -5,23 +5,11 @@ namespace TsfCorp\Lister;
 
 
 use ErrorException;
-use InvalidArgumentException;
-use TsfCorp\Lister\Filters\CheckboxFilter;
-use TsfCorp\Lister\Filters\TextfieldFilter;
 use TsfCorp\Lister\Filters\ListerFilter;
-use TsfCorp\Lister\Filters\RadioFilter;
-use TsfCorp\Lister\Filters\RawFilter;
-use TsfCorp\Lister\Filters\SelectFilter;
 
 /**
  * Class ListerFilterFactory
  * @package TsfCorp\Lister
- *
- * @method static TextfieldFilter input()
- * @method static SelectFilter select()
- * @method static RadioFilter radio()
- * @method static CheckboxFilter checkbox()
- * @method static RawFilter raw()
  */
 class ListerFilterFactory
 {
@@ -29,7 +17,7 @@ class ListerFilterFactory
      *
      * @param string $type
      * @param array $arguments
-     * @return mixed
+     * @return ListerFilter
      *
      * @throws ErrorException
      */

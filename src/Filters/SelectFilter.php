@@ -3,7 +3,10 @@
 
 namespace TsfCorp\Lister\Filters;
 
-
+/**
+ * Class SelectFilter
+ * @package TsfCorp\Lister\Filters
+ */
 class SelectFilter extends ListerFilter
 {
     protected $type = self::TYPE_SELECT;

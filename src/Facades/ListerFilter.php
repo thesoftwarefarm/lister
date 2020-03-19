@@ -4,8 +4,16 @@ namespace TsfCorp\Lister\Facades;
 
 
 use Illuminate\Support\Facades\Facade;
-use TsfCorp\Lister\ListerFilterFactory;
 
+/**
+ * @method static \TsfCorp\Lister\Filters\TextfieldFilter textfield(string $input_name = "", string $label = "")
+ * @method static \TsfCorp\Lister\Filters\SelectFilter select(string $input_name = "", string $label = "")
+ * @method static \TsfCorp\Lister\Filters\RadioFilter radio(string $input_name = "", string $label = "")
+ * @method static \TsfCorp\Lister\Filters\CheckboxFilter checkbox(string $input_name = "", string $label = "")
+ * @method static \TsfCorp\Lister\Filters\RawFilter raw(string $raw_query = "")
+ *
+ * @see \TsfCorp\Lister\ListerFilterFactory
+ */
 class ListerFilter extends Facade
 {
     /**
@@ -15,7 +23,7 @@ class ListerFilter extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return ListerFilterFactory::class;
+        return 'listerfilter';
     }
 
 }

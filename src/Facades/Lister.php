@@ -14,7 +14,7 @@ class Lister extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return \TsfCorp\Lister\Lister::class;
+        return 'lister';
     }
 
 }

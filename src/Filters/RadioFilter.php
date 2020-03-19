@@ -3,7 +3,10 @@
 
 namespace TsfCorp\Lister\Filters;
 
-
+/**
+ * Class RadioFilter
+ * @package TsfCorp\Lister\Filters
+ */
 class RadioFilter extends ListerFilter
 {
     protected $type = self::TYPE_RADIO;
