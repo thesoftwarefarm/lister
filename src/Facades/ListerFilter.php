@@ -4,8 +4,9 @@ namespace TsfCorp\Lister\Facades;
 
 
 use Illuminate\Support\Facades\Facade;
+use TsfCorp\Lister\ListerFilterFactory;
 
-class Lister extends Facade
+class ListerFilter extends Facade
 {
     /**
      * Get the registered name of the component.
@@ -14,7 +15,7 @@ class Lister extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return \TsfCorp\Lister\Lister::class;
+        return ListerFilterFactory::class;
     }
 
 }

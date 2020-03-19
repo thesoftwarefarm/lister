@@ -5,6 +5,7 @@ namespace TsfCorp\Lister;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
+use TsfCorp\Lister\Facades\ListerFilter;
 
 class ListerServiceProvider extends ServiceProvider
 {
@@ -22,6 +23,12 @@ class ListerServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->loadViewsFrom(__DIR__ . '/../views', 'lister');
+
+        $this->publishes([
+            __DIR__ . '/../views' => resource_path('views/vendor/lister'),
+        ], 'views');
+
         $this->publishes([__DIR__ . '/config/lister.php' => config_path('lister.php')]);
     }
 
@@ -32,9 +39,16 @@ class ListerServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('lister', function ($app) {
+        $this->app->bind(Lister::class, function ($app) {
             return new Lister($app->make(Request::class), $app->make(Connection::class));
         });
+
+        $this->app->singleton(ListerFilterFactory::class, function () {
+            return new ListerFilterFactory();
+        });
+
+        $this->app->alias(Lister::class, 'lister');
+        $this->app->alias(ListerFilterFactory::class, 'listerfilter');
     }
 
     /**
@@ -45,7 +59,7 @@ class ListerServiceProvider extends ServiceProvider
     public function provides()
     {
         return [
-            'lister',
+            'lister', 'listerfilter'
         ];
     }
 }

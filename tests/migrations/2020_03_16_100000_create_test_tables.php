@@ -1,12 +1,10 @@
 <?php
 
-namespace TsfCorp\Lister\Test\Migrations;
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTestingUsersTable extends Migration
+class CreateTestTables extends Migration
 {
     /**
      * Run the migrations.
@@ -19,7 +17,19 @@ class CreateTestingUsersTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('email');
+            $table->string('password');
             $table->timestamps();
+        });
+
+        Schema::create('roles', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('roles_2_users', function (Blueprint $table) {
+            $table->unsignedInteger('role_id');
+            $table->unsignedInteger('user_id');
         });
     }
 
@@ -31,5 +41,7 @@ class CreateTestingUsersTable extends Migration
     public function down()
     {
         Schema::dropIfExists('users');
+        Schema::dropIfExists('roles');
+        Schema::dropIfExists('roles_2_users');
     }
 }

@@ -2,11 +2,14 @@
 
 namespace TsfCorp\Lister;
 
+use Exception;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use TsfCorp\Lister\Filters\ListerFilter;
 
 class Lister
 {
@@ -20,6 +23,9 @@ class Lister
     private $request;
     private $db;
 
+    /** @var ListerFilter[]|Collection */
+    private $filters = null;
+
 
     /**
      * Lister constructor.
@@ -31,6 +37,7 @@ class Lister
     {
         $this->request = $request;
         $this->db = $db;
+        $this->filters = new Collection([]);
 
         $this->current_page = $this->request->get('page', $this->current_page);
         $this->results_per_page = $this->request->get('rpp') ?? config('lister.results_per_page', 20);
@@ -74,12 +81,26 @@ class Lister
     }
 
     /**
+     * Add a new filter
+     *
+     * @param ListerFilter $filter
+     * @return $this
+     */
+    public function addFilter(ListerFilter $filter)
+    {
+        $this->filters[] = $filter;
+
+        return $this;
+    }
+
+    /**
      * Fetches records and total figure and creates a paginator instance.
      * Returns a Lister instance where the 'results' member variable is populated with paginated results.
      * By exposing the 'results' member variable, the results can be intercepted
      * and altered in the controller before being sent to the view.
      *
      * @return $this
+     * @throws \ErrorException
      */
     public function get()
     {
@@ -102,15 +123,15 @@ class Lister
      * Executes the query and returns a results array.
      *
      * @return array
+     * @throws \ErrorException
      */
     private function fetchRecords()
     {
         $results = $this->db->select($this->buildQuery());
 
-        $model = ! empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
+        $model = !empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
 
-        if ($model && class_exists($model))
-        {
+        if ($model && class_exists($model)) {
             return $model::hydrate($results);
         }
 
@@ -121,6 +142,7 @@ class Lister
      * Builds and returns an SQL query that combines filters, sorting rules and pagination settings.
      *
      * @return string
+     * @throws \ErrorException
      */
     private function buildQuery()
     {
@@ -141,7 +163,7 @@ class Lister
         }
 
         // build query with fields and body
-        $query = sprintf('SELECT SQL_CALC_FOUND_ROWS %s %s', $this->query_settings['fields'], $query);
+        $query = sprintf('SELECT %s %s', $this->query_settings['fields'], $query);
 
         // add order by if specified
         $sort_by = $this->getSortBy();
@@ -164,43 +186,63 @@ class Lister
      */
     private function getWhereClause()
     {
-        $filters = [];
+        $wheres = [];
 
-        foreach ($this->query_settings['filters'] as $filter) {
-            // add binding with value if we have something in {}
-            preg_match('/\{(.*?)\}/', $filter, $matches);
+        foreach ($this->filters as $filter) {
+            if ($filter->getType() === ListerFilter::TYPE_RAW) {
+                $filter->setActive(true);
+                $wheres[] = $filter->getRawQuery();
+            } else {
+                $searched_keyword = $this->request->get($filter->getInputName());
+                $filter->setSearchKeyword($searched_keyword);
 
-            if (count($matches) && isset($matches[1])) {
-                $filter_name = $matches[1];
-                $filter_value = $this->request->get($filter_name);
+                if (!empty($searched_keyword) || is_numeric($searched_keyword)) {
+                    $filter->setActive(true);
 
-                if (!empty($filter_value) || is_numeric($filter_value)) {
-                    $this->filters_applied = true;
-
-                    if (is_array($filter_value)) {
-                        $filter_value = array_map(function ($item) {
+                    // clean searched keyword
+                    if (is_array($searched_keyword)) {
+                        $searched_keyword = array_map(function ($item) {
                             return addslashes($item);
-                        }, $filter_value);
-
-                        $filters[] = str_replace('{' . $filter_name . '}', "'" . implode("', '", $filter_value) . "'", $filter);
+                        }, $searched_keyword);
                     } else {
-                        $filters[] = str_replace('{' . $filter_name . '}', addslashes($filter_value), $filter);
+                        $searched_keyword = addslashes($searched_keyword);
+                    }
+
+                    // build where clause
+                    if (!empty($filter->getRawQuery())) {
+                        if (is_array($searched_keyword)) {
+                            $wheres[] = str_replace('{' . $filter->getInputName() . '}', "'" . implode("', '", $searched_keyword) . "'", $filter->getRawQuery());
+                        } else {
+                            $wheres[] = str_replace('{' . $filter->getInputName() . '}', addslashes($searched_keyword), $filter->getRawQuery());
+                        }
+                    } else if ($filter->getSearchOperator() == "IN" || is_array($searched_keyword)) {
+                        if (!is_array($searched_keyword)) {
+                            $searched_keyword = [$searched_keyword];
+                        }
+
+                        $wheres[] = sprintf("%s IN ('%s')", $filter->getDbColumn(), implode("', '", $searched_keyword));
+                    } else if (strtoupper($filter->getSearchOperator()) == "LIKE") {
+                        $wheres[] = sprintf("%s %s '%%%s%%'", $filter->getDbColumn(), $filter->getSearchOperator(), $searched_keyword);
+                    } else {
+                        if (!is_numeric($searched_keyword))
+                            $format = "%s %s '%s'";
+                        else
+                            $format = "%s %s %s";
+
+                        $wheres[] = sprintf($format, $filter->getDbColumn(), $filter->getSearchOperator(), $searched_keyword);
                     }
                 }
-            } else {
-                $this->filters_applied = true;
-
-                $filters[] = $filter;
             }
         }
 
-        return $filters;
+        return $wheres;
     }
 
     /**
      * Get sort field and direction
      *
      * @return int|mixed|string
+     * @throws Exception
      */
     private function getSortBy()
     {
@@ -226,7 +268,7 @@ class Lister
         // to mitigate this, the exception is catched, and thrown again after clearing the filters.
         try {
             $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
-        } catch (\ErrorException $e) {
+        } catch (Exception $e) {
             $this->forgetFilters();
             throw $e;
         }
@@ -248,9 +290,18 @@ class Lister
      */
     private function fetchTotal()
     {
-        $total = $this->db->select("SELECT FOUND_ROWS() as counter");
+        $rows_query = preg_replace('/SELECT(.+)FROM/', "SELECT COUNT(*) as total FROM", $this->getUnlimitedSQLQuery());
+        $result = $this->db->select($rows_query);
 
-        return isset($total[0]->counter) ? $total[0]->counter : 0;
+        if (empty($result) || !is_array($result))
+            return 0;
+
+        if (count($result) == 1) {
+            return $result[0]->total;
+        } else {
+            // this is when a group by is applied to main query
+            return count($result);
+        }
     }
 
     /**
@@ -290,7 +341,7 @@ class Lister
      */
     public function isFiltered()
     {
-        return $this->filters_applied;
+        return $this->getActiveFilters()->count() ? true : false;
     }
 
     /**
@@ -352,7 +403,13 @@ class Lister
         $parts = array();
 
         foreach ($query_string_array as $key => $value) {
-            $parts[] = $key . '=' . $value;
+            if (is_array($value)) {
+                foreach ($value as $item) {
+                    $parts[] = $key . '[]=' . $item;
+                }
+            } elseif (strlen($value)) {
+                $parts[] = $key . '=' . $value;
+            }
         }
 
         $normalized_query_string = $this->request->normalizeQueryString(implode('&', $parts));
@@ -407,10 +464,20 @@ class Lister
         $needs_redirect = false;
 
         foreach ($query_string_array as $key => $value) {
-            if (strlen($value) == 0) {
-                $needs_redirect = true;
+            if (is_array($value)) {
+                foreach ($value as $item) {
+                    if (strlen($item) == 0) {
+                        $needs_redirect = true;
+                    } else {
+                        $clean_query_string_array[] = $key . '[]=' . urlencode($item);
+                    }
+                }
             } else {
-                $clean_query_string_array[] = $key . '=' . urlencode($value);
+                if (strlen($value) == 0) {
+                    $needs_redirect = true;
+                } else {
+                    $clean_query_string_array[] = $key . '=' . urlencode($value);
+                }
             }
         }
 
@@ -450,7 +517,11 @@ class Lister
 
         if (count($input_query)) {
             foreach ($input_query as $key => $value) {
-                if (strlen($value)) {
+                if (is_array($value)) {
+                    foreach ($value as $item) {
+                        $clean_query_string_array[] = $key . '[]=' . $item;
+                    }
+                } elseif (strlen($value)) {
                     $clean_query_string_array[] = $key . '=' . $value;
                 }
             }
@@ -474,9 +545,9 @@ class Lister
      */
     public function getRedirectUrl()
     {
-        if($remembered = $this->rememberFilters()) return $remembered;
+        if ($remembered = $this->rememberFilters()) return $remembered;
 
-        if($clean_query_string = $this->cleanQueryString()) return $clean_query_string;
+        if ($clean_query_string = $this->cleanQueryString()) return $clean_query_string;
 
         return NULL;
     }
@@ -490,5 +561,39 @@ class Lister
     public function getResultIndex($index = 0)
     {
         return max($index, 0) + 1 + $this->getResultsPerPage() * ($this->current_page - 1);
+    }
+
+    /**
+     * Returns all defined filters for this instance
+     *
+     * @return Collection|ListerFilter[]
+     */
+    public function getFilters()
+    {
+        return $this->filters;
+    }
+
+    /**
+     * Returns applied filters for this instance
+     *
+     * @return Collection|ListerFilter[]
+     */
+    public function getActiveFilters()
+    {
+        return $this->filters->filter(function ($filter) {
+            /** @var ListerFilter $filter */
+            return $filter->isActive();
+        });
+    }
+
+    public function __call($name, $arguments)
+    {
+        if (!method_exists($this, $name)) {
+            $object = [$this->default(), $name];
+        } else {
+            $object = [$this, $name];
+        }
+
+        return call_user_func_array($object, $arguments);
     }
 }

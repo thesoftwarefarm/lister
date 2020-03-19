@@ -20,7 +20,7 @@
         }
     ],
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.1",
         "illuminate/database": "^5.4|^6.0",
         "illuminate/http": "^5.4|^6.0",
         "illuminate/pagination": "^5.4|^6.0",
@@ -29,8 +29,8 @@
     },
     "require-dev": {
         "fzaninotto/faker": "^1.7",
-        "phpunit/phpunit" : "^5.7|6.2",
-        "orchestra/testbench": "~3.0"
+        "phpunit/phpunit": "^8.0",
+        "orchestra/testbench": "~4.0"
     },
     "autoload": {
         "psr-4": {
@@ -52,7 +52,8 @@
                 "TsfCorp\\Lister\\ListerServiceProvider"
             ],
             "aliases": {
-                "Lister": "TsfCorp\\Lister\\Facades\\Lister"
+                "Lister": "TsfCorp\\Lister\\Facades\\Lister",
+                "ListerFilter": "TsfCorp\\Lister\\Facades\\ListerFilter"
             }
         }
     }
