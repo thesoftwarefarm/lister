@@ -8,8 +8,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use TsfCorp\Lister\Facades\ListerFilter;
 use TsfCorp\Lister\Lister;
-use TsfCorp\Lister\Test\Models\Category;
-use TsfCorp\Lister\Test\Models\Product;
 use TsfCorp\Lister\Test\Models\Role;
 use TsfCorp\Lister\Test\Models\User;
 
