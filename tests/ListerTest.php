@@ -8,6 +8,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use TsfCorp\Lister\Facades\ListerFilter;
 use TsfCorp\Lister\Lister;
+use TsfCorp\Lister\Test\Models\Category;
+use TsfCorp\Lister\Test\Models\Product;
 use TsfCorp\Lister\Test\Models\Role;
 use TsfCorp\Lister\Test\Models\User;
 
@@ -517,5 +519,36 @@ class ListerTest extends TestBootstrap
 
         $this->assertEquals($assigned_roles_count, $listing->getResults()->total());
         $this->assertEquals(3, $listing->getResults()->count()); // per page
+    }
+
+    /**
+     * Currently, when fetching total records for query, Lister is removing all select fields and replacing them with COUNT(*) as total
+     *
+     * This leads to query errors when joining tables which have same column names and current sort key is one of them
+     *
+     * @test
+     * @throws \ErrorException
+     */
+    public function it_not_throws_exception_when_fetching_total_records_caused_by_ambiguous_column_name_in_order_by_clause()
+    {
+        $query_settings = [
+            'fields' => "u.*",
+
+            'body' => "FROM users u
+                       JOIN roles_2_users r2u on r2u.user_id = u.id
+                       JOIN roles r on r2u.role_id = r.id
+                       WHERE {filters}",
+
+            'sortables' => [
+                'id' => 'desc',
+            ],
+        ];
+
+        $request = new Request([], [], ['page' => 3]);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $lister->make($query_settings)->get();
+
+        $this->assertTrue(true);
     }
 }
