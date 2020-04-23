@@ -248,7 +248,7 @@ class Lister
     {
         if ($this->request->has('sortf')) {
             $sort_field = $this->request->get('sortf');
-        } else {
+        } else if (isset($this->query_settings['sortables'])) {
             $sort_field = '';
 
             foreach ($this->query_settings['sortables'] as $sortfield => $sort_direction) {
@@ -291,6 +291,18 @@ class Lister
     private function fetchTotal()
     {
         $rows_query = preg_replace('/SELECT(.+)FROM/', "SELECT COUNT(*) as total FROM", $this->getUnlimitedSQLQuery());
+
+        $sort_by = $this->getSortBy();
+
+        if (!empty($sort_by)) {
+            $rows_query = trim(str_replace(sprintf("ORDER BY %s", $sort_by), "", $rows_query));
+
+            $remove_empty_filter = "WHERE (1)";
+            if (substr($rows_query, -strlen($remove_empty_filter)) === $remove_empty_filter) {
+                $rows_query = trim(str_replace($remove_empty_filter, "", $rows_query));
+            }
+        }
+
         $result = $this->db->select($rows_query);
 
         if (empty($result) || !is_array($result))
@@ -378,11 +390,13 @@ class Lister
         $default_sortf = "";
         $default_sortd = "";
 
-        foreach ($this->query_settings['sortables'] as $sortfield => $sortdir) {
-            if (in_array($sortdir, array('asc', 'desc'))) {
-                $default_sortf = $sortfield;
-                $default_sortd = $sortdir;
-                break;
+        if (isset($this->query_settings['sortables'])) {
+            foreach ($this->query_settings['sortables'] as $sortfield => $sortdir) {
+                if (in_array($sortdir, array('asc', 'desc'))) {
+                    $default_sortf = $sortfield;
+                    $default_sortd = $sortdir;
+                    break;
+                }
             }
         }
 
@@ -434,7 +448,7 @@ class Lister
 
         $sort_dir = "";
 
-        if ((empty($current_sortf) || empty($current_sortd)) && !empty($this->query_settings['sortables'][$sortf])) {
+        if ((empty($current_sortf) || empty($current_sortd)) && isset($this->query_settings['sortables']) && !empty($this->query_settings['sortables'][$sortf])) {
             // $sortf is the default sorting field
             $sort_dir = $this->query_settings['sortables'][$sortf];
         } elseif ($current_sortf == $sortf) {
