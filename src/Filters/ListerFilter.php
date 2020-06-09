@@ -292,8 +292,12 @@ abstract class ListerFilter
     {
         // check that all properies are set
         foreach ($this->validate() as $property) {
-            if (!isset($this->{$property}) || empty($this->{$property})) {
+            if (!isset($this->{$property})) {
                 throw new Exception(sprintf("Property %s must be set for this filter to work.", $property));
+            }
+
+            if (!is_array($this->{$property}) && empty($this->{$property})) {
+                throw new Exception(sprintf("Property %s must have a value set for this filter to work.", $property));
             }
         }
 

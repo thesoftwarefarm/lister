@@ -42,4 +42,20 @@ class SelectFilterTest extends TestBootstrap
             ->setSearchOperator("=")
             ->render();
     }
+
+    /**
+     * @test
+     *
+     */
+    function it_works_with_empty_array_for_items()
+    {
+        $this->expectException(Exception::class);
+
+        ListerFilter::select()
+            ->setInputName("test-select")
+            ->setDbColumn("aaa")
+            ->setSearchOperator("=")
+            ->setItems([])
+            ->render();
+    }
 }
