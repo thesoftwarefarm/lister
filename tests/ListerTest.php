@@ -549,4 +549,68 @@ class ListerTest extends TestBootstrap
 
         $this->assertTrue(true);
     }
+
+    /**
+     * Total number of rows must work fine for groupping
+     *
+     * @test
+     */
+    public function filter_with_having_for_group_by()
+    {
+        $user = User::create([
+            'email' => "test2@mail.com",
+            'name' => "test2",
+            'password' => "123456",
+        ]);
+
+        $role1 = Role::create([
+            'name' => "role1",
+        ]);
+
+        $role2 = Role::create([
+            'name' => "role2",
+        ]);
+
+        $role3 = Role::create([
+            'name' => "role3",
+        ]);
+
+        DB::table('roles_2_users')->insert([
+            ['user_id' => $user->id, 'role_id' => $role1->id],
+            ['user_id' => $user->id, 'role_id' => $role2->id],
+            ['user_id' => $user->id, 'role_id' => $role3->id],
+        ]);
+
+        $query_settings = [
+            'fields' => "u.*, GROUP_CONCAT(r.name) as role_name",
+
+            'body' => "FROM users u
+                        LEFT JOIN roles_2_users r2u on u.id = r2u.user_id
+                        LEFT JOIN roles r on r.id = r2u.role_id
+                        {filters}
+                        GROUP BY u.id
+            {filters}",
+
+            'sortables' => [
+            ],
+
+            'model' => User::class,
+        ];
+
+        $role_filter = ListerFilter::textfield("role_name", "Role name")
+            ->setSearchOperator("LIKE");
+
+        $request = new Request([], [], ['role_name' => "role2"]);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $lister->make($query_settings)
+            ->addHavingFilter($role_filter);
+
+        $listing = $lister->get();
+        $results = $listing->getResults();
+
+        $this->assertEquals(1, $results->total());
+        $this->assertEquals($user->name, $results->first()->name);
+        $this->assertStringContainsString('role2', $results->first()->role_name);
+    }
 }
