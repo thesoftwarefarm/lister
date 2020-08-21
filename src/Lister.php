@@ -51,11 +51,23 @@ class Lister
         $this->offset = $this->computeOffset();
     }
 
+    /**
+     * @param $connection_name
+     * @return \TsfCorp\Lister\Lister
+     */
     public function setConnection($connection_name)
     {
         $this->db = DB::connection($connection_name);
 
         return $this;
+    }
+
+    /**
+     * @return \Illuminate\Database\Connection
+     */
+    public function getConnection()
+    {
+        return $this->db;
     }
 
     /**
