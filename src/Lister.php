@@ -27,13 +27,6 @@ class Lister
     private $filters = null;
 
     /**
-     * Filter to be applied to HAVING
-     * @var ListerFilter[]|Collection
-     */
-    private $having_filters = null;
-
-
-    /**
      * Lister constructor.
      *
      * @param Request $request
@@ -44,7 +37,6 @@ class Lister
         $this->request = $request;
         $this->db = $db;
         $this->filters = new Collection([]);
-        $this->having_filters = new Collection([]);
 
         $this->current_page = $this->request->get('page', $this->current_page);
         $this->results_per_page = $this->request->get('rpp') ?? config('lister.results_per_page', 20);
@@ -107,7 +99,10 @@ class Lister
      */
     public function addFilter(ListerFilter $filter)
     {
-        $this->filters[] = $filter;
+        $this->filters->push([
+            'type' => 'where',
+            'filter' => $filter,
+        ]);
 
         return $this;
     }
@@ -120,7 +115,10 @@ class Lister
      */
     public function addHavingFilter(ListerFilter $filter)
     {
-        $this->having_filters[] = $filter;
+        $this->filters->push([
+            'type' => 'having',
+            'filter' => $filter,
+        ]);
 
         return $this;
     }
@@ -179,7 +177,11 @@ class Lister
     private function buildQuery()
     {
         // add where clause to query body
-        $where_clause = $this->buildConditionsSql($this->filters);
+        $where_clause = $this->buildConditionsSql($this->filters->filter(function ($entry) {
+            return $entry['type'] === 'where';
+        })->map(function ($entry) {
+            return $entry['filter'];
+        }));
 
         $query = $this->query_settings['body'];
 
@@ -198,7 +200,11 @@ class Lister
         $query = sprintf('SELECT %s %s', $this->query_settings['fields'], $query);
 
         // add having clause
-        $having_clause = $this->buildConditionsSql($this->having_filters);
+        $having_clause = $this->buildConditionsSql($this->filters->filter(function ($entry) {
+            return $entry['type'] === 'having';
+        })->map(function ($entry) {
+            return $entry['filter'];
+        }));
 
         if (count($having_clause)) {
             $query .= sprintf(" HAVING %s", implode(' AND ', $having_clause));
@@ -342,7 +348,7 @@ class Lister
             }
         }
 
-        $result = $this->db->select(sprintf("SELECT COUNT(*) as total FROM (%s)", $rows_query));
+        $result = $this->db->select(sprintf("SELECT COUNT(*) as total FROM (%s) as total_count_table", $rows_query));
 
         if (empty($result) || !is_array($result))
             return 0;
@@ -623,7 +629,9 @@ class Lister
      */
     public function getFilters()
     {
-        return $this->filters;
+        return $this->filters->map(function ($entry) {
+            return $entry['filter'];
+        });
     }
 
     /**
@@ -633,7 +641,9 @@ class Lister
      */
     public function getActiveFilters()
     {
-        return $this->filters->filter(function ($filter) {
+        return $this->filters->map(function ($entry) {
+            return $entry['filter'];
+        })->filter(function ($filter) {
             /** @var ListerFilter $filter */
             return $filter->isActive();
         });
