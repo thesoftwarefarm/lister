@@ -26,7 +26,6 @@ class Lister
     /** @var ListerFilter[]|Collection */
     private $filters = null;
 
-
     /**
      * Lister constructor.
      *
@@ -100,7 +99,26 @@ class Lister
      */
     public function addFilter(ListerFilter $filter)
     {
-        $this->filters[] = $filter;
+        $this->filters->push([
+            'type' => 'where',
+            'filter' => $filter,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Add a new filter for HAVING
+     *
+     * @param ListerFilter $filter
+     * @return $this
+     */
+    public function addHavingFilter(ListerFilter $filter)
+    {
+        $this->filters->push([
+            'type' => 'having',
+            'filter' => $filter,
+        ]);
 
         return $this;
     }
@@ -159,16 +177,20 @@ class Lister
     private function buildQuery()
     {
         // add where clause to query body
-        $conditions = $this->getWhereClause();
+        $where_clause = $this->buildConditionsSql($this->filters->filter(function ($entry) {
+            return $entry['type'] === 'where';
+        })->map(function ($entry) {
+            return $entry['filter'];
+        }));
 
         $query = $this->query_settings['body'];
 
         // add where?
         preg_match('/where\r?\s+(.+\r*\s+and\r*\s+)*\{filters\}/i', $query, $where_matches);
 
-        if (count($conditions)) {
+        if (count($where_clause)) {
             $append_where = count($where_matches) ? '' : ' WHERE ';
-            $query = str_replace('{filters}', $append_where . implode(' AND ', $this->getWhereClause()), $query);
+            $query = str_replace('{filters}', $append_where . implode(' AND ', $where_clause), $query);
         } else {
             $empty_filter = count($where_matches) ? ' (1) ' : '';
             $query = str_replace('{filters}', $empty_filter, $query);
@@ -176,6 +198,17 @@ class Lister
 
         // build query with fields and body
         $query = sprintf('SELECT %s %s', $this->query_settings['fields'], $query);
+
+        // add having clause
+        $having_clause = $this->buildConditionsSql($this->filters->filter(function ($entry) {
+            return $entry['type'] === 'having';
+        })->map(function ($entry) {
+            return $entry['filter'];
+        }));
+
+        if (count($having_clause)) {
+            $query .= sprintf(" HAVING %s", implode(' AND ', $having_clause));
+        }
 
         // add order by if specified
         $sort_by = $this->getSortBy();
@@ -194,13 +227,14 @@ class Lister
     /**
      * Return all conditions that will be applied to query
      *
+     * @param ListerFilter[]|Collection $filters
      * @return array
      */
-    private function getWhereClause()
+    private function buildConditionsSql(Collection $filters)
     {
         $wheres = [];
 
-        foreach ($this->filters as $filter) {
+        foreach ($filters as $filter) {
             if ($filter->getType() === ListerFilter::TYPE_RAW) {
                 $filter->setActive(true);
                 $wheres[] = $filter->getRawQuery();
@@ -302,8 +336,7 @@ class Lister
      */
     private function fetchTotal()
     {
-        $rows_query = preg_replace('/SELECT(.+)FROM/', "SELECT COUNT(*) as total FROM", $this->getUnlimitedSQLQuery());
-
+        $rows_query = $this->getUnlimitedSQLQuery();
         $sort_by = $this->getSortBy();
 
         if (!empty($sort_by)) {
@@ -315,7 +348,7 @@ class Lister
             }
         }
 
-        $result = $this->db->select($rows_query);
+        $result = $this->db->select(sprintf("SELECT COUNT(*) as total FROM (%s) as total_count_table", $rows_query));
 
         if (empty($result) || !is_array($result))
             return 0;
@@ -596,7 +629,9 @@ class Lister
      */
     public function getFilters()
     {
-        return $this->filters;
+        return $this->filters->map(function ($entry) {
+            return $entry['filter'];
+        });
     }
 
     /**
@@ -606,7 +641,9 @@ class Lister
      */
     public function getActiveFilters()
     {
-        return $this->filters->filter(function ($filter) {
+        return $this->filters->map(function ($entry) {
+            return $entry['filter'];
+        })->filter(function ($filter) {
             /** @var ListerFilter $filter */
             return $filter->isActive();
         });
