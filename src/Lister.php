@@ -44,12 +44,16 @@ class Lister
     }
 
     /**
-     * @param $connection_name
+     * @param string|\Illuminate\Database\Connection $connection
      * @return \TsfCorp\Lister\Lister
      */
-    public function setConnection($connection_name)
+    public function setConnection($connection)
     {
-        $this->db = DB::connection($connection_name);
+        if (is_string($connection)) {
+            $this->db = DB::connection($connection);
+        } else if ($connection instanceof Connection) {
+            $this->db = $connection;
+        }
 
         return $this;
     }

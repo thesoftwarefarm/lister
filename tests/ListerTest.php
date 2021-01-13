@@ -446,7 +446,7 @@ class ListerTest extends TestBootstrap
         $this->assertEquals([1, 2], $active_filters->first()->getSearchKeyword());
     }
 
-    public function testDifferentConnection()
+    public function testDifferentConnectionByName()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -460,6 +460,24 @@ class ListerTest extends TestBootstrap
 
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
         $listing = $lister->setConnection('other_conn')->make($query_settings)->get();
+
+        $this->assertTrue($listing->getResults()->count() > 1);
+    }
+
+    public function testDifferentConnectionByObject()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
+        $listing = $lister->setConnection(DB::connection('other_conn'))->make($query_settings)->get();
 
         $this->assertTrue($listing->getResults()->count() > 1);
     }
