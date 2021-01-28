@@ -36,7 +36,7 @@ class SelectFilter extends ListerFilter
     /**
      * @inheritDoc
      */
-    public function validate()
+    public function mandatoryProperties(): array
     {
         return [
             'label',

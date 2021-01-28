@@ -302,7 +302,7 @@ class ListerTest extends TestBootstrap
 
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
         $lister->make($query_settings)
-            ->addFilter(ListerFilter::raw("email = 'test1@mail.com'"));
+            ->addFilter(ListerFilter::raw("email = 'test1@mail.com'")->noRender());
 
         $listing = $lister->get();
 

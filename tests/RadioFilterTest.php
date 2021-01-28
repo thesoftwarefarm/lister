@@ -33,6 +33,6 @@ class RadioFilterTest extends TestBootstrap
 
         ListerFilter::radio("test-radio")
             ->setDbColumn("aaa")
-            ->render();
+            ->validate();
     }
 }

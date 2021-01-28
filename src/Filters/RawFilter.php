@@ -13,10 +13,21 @@ class RawFilter extends ListerFilter
     /**
      * @inheritDoc
      */
-    public function validate()
+    public function mandatoryProperties(): array
     {
-        return [
-            'raw_query'
+        $props = [
+            'raw_query',
         ];
+
+        if ($this->has_render) {
+            $props = array_merge($props, ['label', 'search_keyword']);
+        }
+
+        return $props;
+    }
+
+    public function render(): string
+    {
+        return "";
     }
 }

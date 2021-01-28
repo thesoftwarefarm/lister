@@ -40,7 +40,7 @@ class SelectFilterTest extends TestBootstrap
             ->setInputName("test-select")
             ->setDbColumn("aaa")
             ->setSearchOperator("=")
-            ->render();
+            ->validate();
     }
 
     /**
@@ -56,6 +56,6 @@ class SelectFilterTest extends TestBootstrap
             ->setDbColumn("aaa")
             ->setSearchOperator("=")
             ->setItems([])
-            ->render();
+            ->validate();
     }
 }

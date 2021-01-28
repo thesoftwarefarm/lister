@@ -36,7 +36,7 @@ class RadioFilter extends ListerFilter
     /**
      * @inheritDoc
      */
-    public function validate()
+    public function mandatoryProperties(): array
     {
         return [
             'input_name',

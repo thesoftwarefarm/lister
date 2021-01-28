@@ -88,7 +88,7 @@ class Lister
      *
      * @return $this
      */
-    public function make($query_settings)
+    public function make($query_settings): Lister
     {
         $this->query_settings = $query_settings;
 
@@ -100,9 +100,13 @@ class Lister
      *
      * @param ListerFilter $filter
      * @return $this
+     * @throws Exception
      */
-    public function addFilter(ListerFilter $filter)
+    public function addFilter(ListerFilter $filter): Lister
     {
+        // validate filter before adding to collection
+        $filter->validate();
+
         $this->filters->push([
             'type' => 'where',
             'filter' => $filter,
@@ -117,7 +121,7 @@ class Lister
      * @param ListerFilter $filter
      * @return $this
      */
-    public function addHavingFilter(ListerFilter $filter)
+    public function addHavingFilter(ListerFilter $filter): Lister
     {
         $this->filters->push([
             'type' => 'having',

@@ -31,7 +31,7 @@ class CheckboxFilterTest extends TestBootstrap
     {
         $this->expectException(Exception::class);
 
-        ListerFilter::checkbox("test-checkbox")->render();
+        ListerFilter::checkbox("test-checkbox")->validate();
     }
 
     /**

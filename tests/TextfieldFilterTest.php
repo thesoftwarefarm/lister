@@ -25,7 +25,7 @@ class TextfieldFilterTest extends TestBootstrap
     {
         $this->expectException(Exception::class);
 
-        ListerFilter::textfield()->render();
+        ListerFilter::textfield()->validate();
     }
 
     /**

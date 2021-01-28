@@ -82,6 +82,13 @@ abstract class ListerFilter
     protected $view_data = [];
 
     /**
+     * Specify if this filter can be rendered
+     *
+     * @var bool
+     */
+    protected $has_render = true;
+
+    /**
      * ListerFilter constructor.
      */
     public function __construct()
@@ -278,20 +285,28 @@ abstract class ListerFilter
     }
 
     /**
+     *
+     */
+    public function noRender(): ListerFilter
+    {
+        $this->has_render = false;
+        return $this;
+    }
+
+    /**
      * Specify which class members are required
      *
      * @return array
      */
-    public abstract function validate();
+    public abstract function mandatoryProperties(): array;
 
     /**
-     * @return array|string
-     * @throws \Throwable
+     * @return bool
+     * @throws Exception
      */
-    public function render()
+    public function validate(): bool
     {
-        // check that all properies are set
-        foreach ($this->validate() as $property) {
+        foreach ($this->mandatoryProperties() as $property) {
             if (!isset($this->{$property})) {
                 throw new Exception(sprintf("Property %s must be set for this filter to work.", $property));
             }
@@ -301,6 +316,15 @@ abstract class ListerFilter
             }
         }
 
+        return true;
+    }
+
+    /**
+     * @return array|string
+     * @throws \Throwable
+     */
+    public function render()
+    {
         $this->viewData();
 
         return $this->view()->with($this->view_data)->render();
