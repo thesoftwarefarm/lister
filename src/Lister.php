@@ -13,24 +13,46 @@ use TsfCorp\Lister\Filters\ListerFilter;
 
 class Lister
 {
+    /**
+     * @var \Illuminate\Pagination\LengthAwarePaginator
+     */
     public $results;
+    /**
+     * @var array
+     */
     private $query_settings;
+    /**
+     * @var int
+     */
     private $results_per_page = 10;
+    /**
+     * @var int
+     */
     private $current_page = 1;
+    /**
+     * @var int
+     */
     private $offset = 0;
-    private $filters_applied = false;
+    /**
+     * @var string
+     */
     private $sql_without_limits;
+    /**
+     * @var \Illuminate\Http\Request
+     */
     private $request;
+    /**
+     * @var \Illuminate\Database\Connection
+     */
     private $db;
-
-    /** @var ListerFilter[]|Collection */
+    /**
+     * @var \TsfCorp\Lister\Filters\ListerFilter[]|\Illuminate\Support\Collection
+     */
     private $filters = null;
 
     /**
-     * Lister constructor.
-     *
-     * @param Request $request
-     * @param Connection $db
+     * @param \Illuminate\Http\Request $request
+     * @param \Illuminate\Database\Connection $db
      */
     public function __construct(Request $request, Connection $db)
     {
@@ -70,7 +92,7 @@ class Lister
      * Returns the offset needed for executing the query,
      * given the current 'results per page'/'current page' configuration.
      *
-     * @return int|mixed
+     * @return int
      */
     private function computeOffset()
     {
@@ -85,8 +107,7 @@ class Lister
      * Returns a Lister instance with query settings applied.
      *
      * @param $query_settings
-     *
-     * @return $this
+     * @return \TsfCorp\Lister\Lister
      */
     public function make($query_settings): Lister
     {
@@ -98,13 +119,12 @@ class Lister
     /**
      * Add a new filter
      *
-     * @param ListerFilter $filter
-     * @return $this
+     * @param \TsfCorp\Lister\Filters\ListerFilter $filter
+     * @return \TsfCorp\Lister\Lister
      * @throws Exception
      */
     public function addFilter(ListerFilter $filter): Lister
     {
-        // validate filter before adding to collection
         $filter->validate();
 
         $this->filters->push([
@@ -118,8 +138,8 @@ class Lister
     /**
      * Add a new filter for HAVING
      *
-     * @param ListerFilter $filter
-     * @return $this
+     * @param \TsfCorp\Lister\Filters\ListerFilter $filter
+     * @return \TsfCorp\Lister\Lister
      */
     public function addHavingFilter(ListerFilter $filter): Lister
     {
@@ -137,7 +157,7 @@ class Lister
      * By exposing the 'results' member variable, the results can be intercepted
      * and altered in the controller before being sent to the view.
      *
-     * @return $this
+     * @return \TsfCorp\Lister\Lister
      * @throws \ErrorException
      */
     public function get()
@@ -235,7 +255,7 @@ class Lister
     /**
      * Return all conditions that will be applied to query
      *
-     * @param ListerFilter[]|Collection $filters
+     * @param \TsfCorp\Lister\Filters\ListerFilter[]|\Illuminate\Support\Collection $filters
      * @return array
      */
     private function buildConditionsSql(Collection $filters)
@@ -295,7 +315,7 @@ class Lister
     /**
      * Get sort field and direction
      *
-     * @return int|mixed|string
+     * @return string
      * @throws Exception
      */
     private function getSortBy()
@@ -370,8 +390,6 @@ class Lister
     }
 
     /**
-     * A getter for the number of results per page.
-     *
      * @return int
      */
     public function getResultsPerPage()
@@ -380,8 +398,6 @@ class Lister
     }
 
     /**
-     * A setter for the number of results per page.
-     *
      * @param $results_per_page
      * @return void
      */
@@ -392,7 +408,7 @@ class Lister
     }
 
     /**
-     * @return LengthAwarePaginator
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getResults()
     {
@@ -400,8 +416,6 @@ class Lister
     }
 
     /**
-     * Whether there are any filters applied to the current listing.
-     *
      * @return bool
      */
     public function isFiltered()
@@ -423,7 +437,6 @@ class Lister
      * Given a string, returns a stripped version, where newlines and extra spaces are removed.
      *
      * @param string $string
-     *
      * @return string
      */
     private function makeOneLiner($string = "")
@@ -435,7 +448,6 @@ class Lister
      * Given a sorting field, this returns an URL having this field as a sort parameter.
      *
      * @param string $sortf
-     *
      * @return string
      */
     public function sortLink($sortf = "")
@@ -488,7 +500,6 @@ class Lister
      * Given a sorting field, this returns the CSS classes to be applied to the corresponding sorting button.
      *
      * @param string $sortf
-     *
      * @return string
      */
     public function sortDir($sortf = "")
@@ -612,11 +623,15 @@ class Lister
      */
     public function getRedirectUrl()
     {
-        if ($remembered = $this->rememberFilters()) return $remembered;
+        if ($remembered = $this->rememberFilters()) {
+            return $remembered;
+        }
 
-        if ($clean_query_string = $this->cleanQueryString()) return $clean_query_string;
+        if ($clean_query_string = $this->cleanQueryString()) {
+            return $clean_query_string;
+        }
 
-        return NULL;
+        return null;
     }
 
     /**
@@ -643,9 +658,7 @@ class Lister
     }
 
     /**
-     * Returns applied filters for this instance
-     *
-     * @return Collection|ListerFilter[]
+     * @return \TsfCorp\Lister\Filters\ListerFilter[]|\Illuminate\Support\Collection
      */
     public function getActiveFilters()
     {
