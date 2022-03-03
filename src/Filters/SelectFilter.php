@@ -46,4 +46,13 @@ class SelectFilter extends ListerFilter
             'items',
         ];
     }
+
+    public function validate(): bool
+    {
+        if (!parent::validate()) {
+            return false;
+        }
+
+        return in_array($this->getSearchKeyword(), array_keys($this->items));
+    }
 }

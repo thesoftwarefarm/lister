@@ -631,4 +631,36 @@ class ListerTest extends TestBootstrap
         $this->assertEquals($user->name, $results->first()->name);
         $this->assertStringContainsString('role2', $results->first()->role_name);
     }
+
+    /**
+     * @test
+     */
+    public function it_doesnt_apply_select_filter_with_undefined_index_in_items()
+    {
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $select_filter = ListerFilter::select("filter_user", "Name")
+            ->setDbColumn("email")
+            ->setItems([
+                'test1' => 'test 1',
+                'test2' => 'test 2',
+            ]);
+
+        $request = new Request([], [], ['filter_user' => 'test3']);
+
+        $lister = new Lister($request, $this->app->make(Connection::class));
+        $lister->make($query_settings)
+            ->addFilter($select_filter);
+        $lister->get();
+
+        $this->assertCount(0, $lister->getActiveFilters());
+    }
 }

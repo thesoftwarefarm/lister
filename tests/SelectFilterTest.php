@@ -58,4 +58,22 @@ class SelectFilterTest extends TestBootstrap
             ->setItems([])
             ->validate();
     }
+
+    /** @test */
+    function filter_is_not_added_when_search_keyword_is_not_in_set()
+    {
+        $filter = ListerFilter::select()
+            ->setInputName("test-select")
+            ->setLabel("test-label-select")
+            ->setDbColumn("aaa")
+            ->setSearchOperator("=")
+            ->setItems([
+                'a' => "Option 1",
+                'b' => "Option 2",
+                'c' => "Option 3",
+            ])
+            ->setSearchKeyword("d");
+
+        $this->assertFalse($filter->validate());
+    }
 }

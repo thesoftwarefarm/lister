@@ -270,6 +270,10 @@ class Lister
                 $searched_keyword = $this->request->get($filter->getInputName());
                 $filter->setSearchKeyword($searched_keyword);
 
+                if (!$filter->validate()) {
+                    continue;
+                }
+
                 if (!empty($searched_keyword) || is_numeric($searched_keyword)) {
                     $filter->setActive(true);
 
