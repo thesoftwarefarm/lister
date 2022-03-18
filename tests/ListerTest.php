@@ -657,8 +657,7 @@ class ListerTest extends TestBootstrap
         $request = new Request([], [], ['filter_user' => 'test3']);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
-        $lister->make($query_settings)
-            ->addFilter($select_filter);
+        $lister->make($query_settings)->addFilter($select_filter);
         $lister->get();
 
         $this->assertCount(0, $lister->getActiveFilters());

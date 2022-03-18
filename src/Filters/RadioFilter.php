@@ -46,12 +46,12 @@ class RadioFilter extends ListerFilter
         ];
     }
 
-    public function validate(): bool
+    public function setSearchKeyword($search_keyword): ListerFilter
     {
-        if (!parent::validate()) {
-            return false;
+        if (in_array($search_keyword, array_keys($this->items))) {
+            $this->search_keyword = $search_keyword;
         }
 
-        return in_array($this->getSearchKeyword(), array_keys($this->items));
+        return $this;
     }
 }

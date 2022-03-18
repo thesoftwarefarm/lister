@@ -74,6 +74,6 @@ class SelectFilterTest extends TestBootstrap
             ])
             ->setSearchKeyword("d");
 
-        $this->assertFalse($filter->validate());
+        $this->assertEmpty($filter->getSearchKeyword());
     }
 }

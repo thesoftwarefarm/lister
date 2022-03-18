@@ -46,12 +46,12 @@ class CheckboxFilter extends ListerFilter
         ];
     }
 
-    public function validate(): bool
+    public function setSearchKeyword($search_keyword): ListerFilter
     {
-        if (!parent::validate()) {
-            return false;
+        if (is_array($search_keyword)) {
+            $this->search_keyword = array_intersect($search_keyword, array_keys($this->items));
         }
 
-        return in_array($this->getSearchKeyword(), array_keys($this->items));
+        return $this;
     }
 }

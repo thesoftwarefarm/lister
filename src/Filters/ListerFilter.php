@@ -29,19 +29,19 @@ abstract class ListerFilter
      * Label to be used in html view
      * @var string
      */
-    private $label;
+    protected $label;
 
     /**
      * Name attribute of the html component
      * @var string
      */
-    private $input_name;
+    protected $input_name;
 
     /**
      * Database column for where clause
      * @var string
      */
-    private $db_column;
+    protected $db_column;
 
     /**
      * Where operator to be applied: = / <= / >= / <> / LIKE
@@ -49,31 +49,31 @@ abstract class ListerFilter
      *
      * @var string
      */
-    private $search_operator = "=";
+    protected $search_operator = "=";
 
     /**
      * Keyword to search for
      * @var string|array
      */
-    private $search_keyword;
+    protected $search_keyword;
 
     /**
      * Keyword to search for
      * @var string|array
      */
-    private $raw_query;
+    protected $raw_query;
 
     /**
      * If this filter is applied in listing
      * @var bool
      */
-    private $is_active = false;
+    protected $is_active = false;
 
     /**
      * View to be used for render
      * @var string
      */
-    private $view_name;
+    protected $view_name;
 
     /**
      * Data passed to the view

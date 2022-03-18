@@ -267,12 +267,9 @@ class Lister
                 $filter->setActive(true);
                 $wheres[] = $filter->getRawQuery();
             } else {
-                $searched_keyword = $this->request->get($filter->getInputName());
-                $filter->setSearchKeyword($searched_keyword);
+                $filter->setSearchKeyword($this->request->get($filter->getInputName()));
 
-                if (!$filter->validate()) {
-                    continue;
-                }
+                $searched_keyword = $filter->getSearchKeyword();
 
                 if (!empty($searched_keyword) || is_numeric($searched_keyword)) {
                     $filter->setActive(true);
