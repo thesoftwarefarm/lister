@@ -6,6 +6,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use TsfCorp\Lister\Exceptions\ListerException;
 use TsfCorp\Lister\Facades\ListerFilter;
 use TsfCorp\Lister\Lister;
 use TsfCorp\Lister\Test\Models\Role;
@@ -661,5 +662,23 @@ class ListerTest extends TestBootstrap
         $lister->get();
 
         $this->assertCount(0, $lister->getActiveFilters());
+    }
+
+    public function it_throws_lister_exception()
+    {
+        $this->expectException(ListerException::class);
+
+        $query_settings = [
+            'fields' => "users.*",
+
+            'body' => "FROM users {filters}",
+
+            'sortables' => [
+                'name' => 'asc',
+            ],
+        ];
+
+        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
+        $lister->make($query_settings)->get();
     }
 }

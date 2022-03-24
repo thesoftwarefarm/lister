@@ -9,6 +9,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Throwable;
+use TsfCorp\Lister\Exceptions\ListerException;
 use TsfCorp\Lister\Filters\ListerFilter;
 
 class Lister
@@ -185,7 +187,13 @@ class Lister
      */
     private function fetchRecords()
     {
-        $results = $this->db->select($this->buildQuery());
+        try {
+            $results = $this->db->select($this->buildQuery());
+        } catch (Throwable $t) {
+            $this->forgetFilters();
+
+            throw new ListerException($t->getMessage(), $t->getCode(), $t);
+        }
 
         $model = !empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
 
