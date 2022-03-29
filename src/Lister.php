@@ -329,13 +329,17 @@ class Lister
      */
     private function getSortBy()
     {
+        if (empty($this->query_settings['sortables'])) {
+            return "";
+        }
+
         if ($this->request->has('sortf')) {
             $sort_field = $this->request->get('sortf');
         } else if (isset($this->query_settings['sortables'])) {
             $sort_field = '';
 
             foreach ($this->query_settings['sortables'] as $sortfield => $sort_direction) {
-                if (in_array($sort_direction, array('asc', 'desc'))) {
+                if (in_array($sort_direction, ['asc', 'desc'])) {
                     $sort_field = $sortfield;
                     break;
                 }
@@ -347,16 +351,17 @@ class Lister
             return "";
         }
 
-        // when sorting by a field that doesn't exist, an exception is thrown;
-        // if the filters are "remembered", the user can't recover by changing the URL;
-        // to mitigate this, the exception is catched, and thrown again after clearing the filters.
-        try {
-            $sort_field .= " " . $this->request->get('sortd', $this->query_settings['sortables'][$sort_field]);
-        } catch (Exception $e) {
+        if (!isset($this->query_settings['sortables'][$sort_field])) {
             return "";
         }
 
-        return $sort_field;
+        $sort_direction = $this->request->input('sortd', $this->query_settings['sortables'][$sort_field] ?? 'asc');
+
+        if (!empty($this->query_settings['unique_sort_column'])) {
+            return sprintf("%s %s, %s %s", $sort_field, $sort_direction, $this->query_settings['unique_sort_column'], $sort_direction);
+        }
+
+        return sprintf("%s %s", $sort_field, $sort_direction);
     }
 
     private function forgetFilters()

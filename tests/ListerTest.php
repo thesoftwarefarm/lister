@@ -681,4 +681,38 @@ class ListerTest extends TestBootstrap
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
         $lister->make($query_settings)->get();
     }
+
+    public function test_it_sorts_by_non_unique_column_with_pagination()
+    {
+        $dates = [
+            '2022-03-01',
+            '2022-03-02',
+        ];
+
+        foreach($dates as $date)
+        {
+            foreach(range(1, 3) as $i)
+            {
+                DB::table('entries')->insert(['entry_date' => $date]);
+            }
+        }
+
+        $query_settings = [
+            'fields' => "entries.*",
+
+            'body' => "FROM entries {filters}",
+
+            'sortables' => [
+                'entry_date' => 'desc',
+            ],
+
+            'unique_sort_column' => 'id'
+        ];
+
+        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
+        $lister->setResultsPerPage(2);
+        $lister->make($query_settings)->get();
+
+        $this->assertEquals([6,5], $lister->results->pluck('id')->toArray());
+    }
 }

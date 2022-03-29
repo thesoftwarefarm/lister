@@ -31,6 +31,12 @@ class CreateTestTables extends Migration
             $table->unsignedInteger('role_id');
             $table->unsignedInteger('user_id');
         });
+
+        Schema::create('entries', function (Blueprint $table) {
+            $table->increments('id');
+            $table->date('entry_date');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -43,5 +49,6 @@ class CreateTestTables extends Migration
         Schema::dropIfExists('users');
         Schema::dropIfExists('roles');
         Schema::dropIfExists('roles_2_users');
+        Schema::dropIfExists('entries');
     }
 }
