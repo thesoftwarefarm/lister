@@ -192,7 +192,7 @@ class Lister
         } catch (Throwable $t) {
             $this->forgetFilters();
 
-            throw new ListerException($t->getMessage(), $t->getCode(), $t);
+            throw new ListerException($t->getMessage(), (int) $t->getCode(), $t);
         }
 
         $model = !empty($this->query_settings['model']) ? $this->query_settings['model'] : null;
