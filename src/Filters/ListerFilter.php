@@ -186,9 +186,9 @@ abstract class ListerFilter
      * @param string $raw_query
      * @return ListerFilter
      */
-    public function setRawQuery(string $raw_query): ListerFilter
+    public function setRawQuery(string|callable $raw_query): ListerFilter
     {
-        $this->raw_query = $raw_query;
+        $this->raw_query = is_callable($raw_query) ? $raw_query() : $raw_query;
         return $this;
     }
 
