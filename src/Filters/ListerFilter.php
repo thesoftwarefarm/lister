@@ -285,12 +285,20 @@ abstract class ListerFilter
     }
 
     /**
-     *
+     * @return $this
      */
     public function noRender(): ListerFilter
     {
         $this->has_render = false;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasRender(): bool
+    {
+        return $this->has_render;
     }
 
     /**
