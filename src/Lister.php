@@ -315,6 +315,9 @@ class Lister
                         $wheres[] = sprintf($format, $filter->getDbColumn(), $filter->getSearchOperator(), $searched_keyword);
                     }
                 }
+                elseif($default_raw_query = $filter->getDefaultRawQuery()) {
+                    $wheres[] = $default_raw_query;
+                }
             }
         }
 
