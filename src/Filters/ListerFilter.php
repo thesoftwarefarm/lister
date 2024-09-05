@@ -58,10 +58,14 @@ abstract class ListerFilter
     protected $search_keyword;
 
     /**
-     * Keyword to search for
-     * @var string|array
+     * @var string
      */
     protected $raw_query;
+
+    /**
+     * @var string
+     */
+    protected $default_raw_query;
 
     /**
      * If this filter is applied in listing
@@ -183,12 +187,30 @@ abstract class ListerFilter
     }
 
     /**
-     * @param string $raw_query
+     * @param string|callable $raw_query
      * @return ListerFilter
      */
     public function setRawQuery(string|callable $raw_query): ListerFilter
     {
         $this->raw_query = is_callable($raw_query) ? $raw_query() : $raw_query;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultRawQuery()
+    {
+        return $this->default_raw_query;
+    }
+
+    /**
+     * @param string|callable $default_raw_query
+     * @return ListerFilter
+     */
+    public function setDefaultRawQuery(string|callable $default_raw_query): ListerFilter
+    {
+        $this->default_raw_query = is_callable($default_raw_query) ? $default_raw_query() : $default_raw_query;
         return $this;
     }
 
