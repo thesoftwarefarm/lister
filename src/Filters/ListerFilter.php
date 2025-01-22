@@ -93,6 +93,20 @@ abstract class ListerFilter
     protected $has_render = true;
 
     /**
+     * Specify if the filter input should be rendered
+     *
+     * @var bool
+     */
+    protected $render_input = true;
+
+    /**
+     * Specify if the search keyword should be rendered
+     *
+     * @var bool
+     */
+    protected $render_search_keyword = true;
+
+    /**
      * ListerFilter constructor.
      */
     public function __construct()
@@ -321,6 +335,42 @@ abstract class ListerFilter
     public function hasRender(): bool
     {
         return $this->has_render;
+    }
+
+    /**
+     * @return $this
+     */
+    public function doNotRenderInput()
+    {
+        $this->render_input = false;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function shouldRenderInput()
+    {
+        return $this->render_input;
+    }
+
+    /**
+     * @return $this
+     */
+    public function doNotRenderSearchKeyword()
+    {
+        $this->render_search_keyword = false;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function shouldRenderSearchKeyword()
+    {
+        return $this->render_search_keyword;
     }
 
     /**
