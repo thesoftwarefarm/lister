@@ -1,9 +1,8 @@
 <?php
 
-
 namespace TsfCorp\Lister\Filters;
 
-
+use Closure;
 use Exception;
 use Illuminate\Support\Str;
 
@@ -105,6 +104,11 @@ abstract class ListerFilter
      * @var bool
      */
     protected $render_search_keyword = true;
+
+    /**
+     * @var \Closure|null
+     */
+    private ?Closure $search_keyword_callback = null;
 
     /**
      * ListerFilter constructor.
@@ -229,6 +233,17 @@ abstract class ListerFilter
     }
 
     /**
+     * @param \Closure $callback
+     * @return ListerFilter
+     */
+    public function setSearchKeywordCallback(Closure $callback)
+    {
+        $this->search_keyword_callback = $callback;
+
+        return $this;
+    }
+
+    /**
      * @return array|string
      */
     public function getSearchKeyword()
@@ -242,7 +257,8 @@ abstract class ListerFilter
      */
     public function setSearchKeyword($search_keyword): ListerFilter
     {
-        $this->search_keyword = $search_keyword;
+        $this->search_keyword = $this->search_keyword_callback ? call_user_func($this->search_keyword_callback, $search_keyword) : $search_keyword;
+
         return $this;
     }
 
