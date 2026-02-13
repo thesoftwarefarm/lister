@@ -2,7 +2,6 @@
 
 namespace TsfCorp\Lister;
 
-use Exception;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
