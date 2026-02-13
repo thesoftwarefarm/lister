@@ -4,9 +4,9 @@ namespace TsfCorp\Lister\Filters;
 
 use Illuminate\Support\Str;
 
-class SelectFilter extends ListerFilter
+class SimpleSelectFilter extends ListerFilter
 {
-    protected string $type = self::TYPE_SELECT;
+    protected string $type = self::TYPE_SIMPLE_SELECT;
     public array $items = [];
 
     public static function make(string $input_name, string $label = '', string $db_column = '')
