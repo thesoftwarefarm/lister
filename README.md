@@ -2,6 +2,9 @@
  
 Makes it easy to list a resource
 
+# Upgrade from 1.x to 2.x
+- `use TsfCorp\Lister\Facades\ListerFilter` has been removed. use `use TsfCorp\Lister\Filters\ListerFilter`
+
 # Installation
 
 Require this package in your `composer.json` and update composer. Run the following command:
@@ -60,4 +63,3 @@ If using remembered filters and also for query string cleanup, this is needed at
 ```php
 if($redirect_url = $lister->getRedirectUrl()) return redirect($redirect_url);
 ```
-
