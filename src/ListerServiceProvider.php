@@ -8,7 +8,7 @@ class ListerServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../views', 'lister');
+        $this->loadViewsFrom(__DIR__ . '/views', 'lister');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -16,7 +16,7 @@ class ListerServiceProvider extends ServiceProvider
             ], 'lister-config');
 
             $this->publishes([
-                __DIR__ . '/../views' => resource_path('views/vendor/lister'),
+                __DIR__ . '/views' => resource_path('views/vendor/lister'),
             ], 'lister-views');
         }
     }
