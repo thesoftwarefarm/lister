@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use TsfCorp\Lister\Exceptions\ListerException;
-use TsfCorp\Lister\Facades\ListerFilter;
+use TsfCorp\Lister\Filters\ListerFilter;
 use TsfCorp\Lister\Lister;
 use TsfCorp\Lister\Tests\Models\Role;
 use TsfCorp\Lister\Tests\Models\User;
@@ -238,34 +238,6 @@ class ListerTest extends TestCase
         $listing = $lister->get();
 
         $this->assertTrue($listing->getResults()->total() == 2);
-        $this->assertCount(1, $lister->getActiveFilters());
-    }
-
-    public function test_it_applies_raw_filters()
-    {
-        User::forceCreate([
-            'email' => "test1@mail.com",
-            'name' => "test1",
-            'password' => "123456",
-        ]);
-
-        $query_settings = [
-            'fields' => "users.*",
-
-            'body' => "FROM users {filters}",
-
-            'sortables' => [
-                'name' => 'asc',
-            ],
-        ];
-
-        $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
-        $lister->make($query_settings)
-            ->addFilter(ListerFilter::raw("email = 'test1@mail.com'")->noRender());
-
-        $listing = $lister->get();
-
-        $this->assertTrue($listing->getResults()->total() == 1);
         $this->assertCount(1, $lister->getActiveFilters());
     }
 

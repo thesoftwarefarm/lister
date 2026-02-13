@@ -2,18 +2,17 @@
 
 namespace TsfCorp\Lister\Tests;
 
-use Exception;
-use TsfCorp\Lister\Facades\ListerFilter;
+use TsfCorp\Lister\Filters\ListerFilter;
 
 class CheckboxFilterTest extends TestCase
 {
     function test_filter_is_rendered_properly()
     {
-        $filter = ListerFilter::checkbox("test-checkbox")
+        $filter = ListerFilter::checkbox('test-checkbox')
             ->setItems([
-                'a' => "Option 1",
-                'b' => "Option 2",
-                'c' => "Option 3",
+                'a' => 'Option 1',
+                'b' => 'Option 2',
+                'c' => 'Option 3',
             ])
             ->render();
 
@@ -24,24 +23,24 @@ class CheckboxFilterTest extends TestCase
 
     function test_searched_keywords_are_checked()
     {
-        $filter = ListerFilter::checkbox("test-checkbox")
+        $filter = ListerFilter::checkbox('test-checkbox')
             ->setItems([
-                'a' => "Option 1",
-                'b' => "Option 2",
-                'c' => "Option 3",
+                'a' => 'Option 1',
+                'b' => 'Option 2',
+                'c' => 'Option 3',
             ])
-            ->setSearchKeyword(["a"]);
+            ->setSearchKeyword(['a']);
 
         $this->assertStringContainsString('checked', $filter->render());
     }
 
     function test_invalid_searched_keywords_are_removed()
     {
-        $filter = ListerFilter::checkbox("test-checkbox")
+        $filter = ListerFilter::checkbox('test-checkbox')
             ->setItems([
-                'a' => "Option 1",
-                'b' => "Option 2",
-                'c' => "Option 3",
+                'a' => 'Option 1',
+                'b' => 'Option 2',
+                'c' => 'Option 3',
             ])
             ->setSearchKeyword(['a', 'd', 'e']);
 

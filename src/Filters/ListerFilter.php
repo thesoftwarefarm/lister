@@ -3,239 +3,130 @@
 namespace TsfCorp\Lister\Filters;
 
 use Closure;
-use Exception;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
-/**
- * Class ListerFilter
- * @package TsfCorp\Lister\Filters
- */
 abstract class ListerFilter
 {
-    const TYPE_INPUT = "input";
-    const TYPE_SELECT = "select";
-    const TYPE_CHECKBOX = "checkbox";
-    const TYPE_RADIO = "radio";
-    const TYPE_RAW = "raw";
+    public const TYPE_INPUT = "input";
+    public const TYPE_SELECT = "select";
+    public const TYPE_CHECKBOX = "checkbox";
+    public const TYPE_RADIO = "radio";
+    public const TYPE_RAW = "raw";
 
-    /**
-     *  What type of filter this is: INPUT / SELECT / CHECKBOX
-     * @var string
-     */
-    protected $type;
-
-    /**
-     * Label to be used in html view
-     * @var string
-     */
-    protected $label;
-
-    /**
-     * Name attribute of the html component
-     * @var string
-     */
-    protected $input_name;
-
-    /**
-     * Database column for where clause
-     * @var string
-     */
-    protected $db_column;
-
-    /**
-     * Where operator to be applied: = / <= / >= / <> / LIKE
-     * default value is =
-     *
-     * @var string
-     */
-    protected $search_operator = "=";
-
-    /**
-     * Keyword to search for
-     * @var string|array
-     */
-    protected $search_keyword;
-
-    /**
-     * @var string
-     */
-    protected $raw_query;
-
-    /**
-     * @var string
-     */
-    protected $default_raw_query;
-
-    /**
-     * If this filter is applied in listing
-     * @var bool
-     */
-    protected $is_active = false;
-
-    /**
-     * View to be used for render
-     * @var string
-     */
-    protected $view_name;
-
-    /**
-     * Data passed to the view
-     * @var array
-     */
-    protected $view_data = [];
-
-    /**
-     * Specify if this filter can be rendered
-     *
-     * @var bool
-     */
-    protected $has_render = true;
-
-    /**
-     * Specify if the filter input should be rendered
-     *
-     * @var bool
-     */
-    protected $render_input = true;
-
-    /**
-     * Specify if the search keyword should be rendered
-     *
-     * @var bool
-     */
-    protected $render_search_keyword = true;
-
-    /**
-     * @var \Closure|null
-     */
+    protected string $type;
+    protected string $input_name;
+    protected string $label = '';
+    protected string $db_column = '';
+    protected mixed $search_keyword = null;
+    protected string $search_operator = '=';
+    protected string $raw_query = '';
+    protected string $default_raw_query = '';
+    protected bool $is_active = false;
+    protected string $view_name;
+    protected array $view_data = [];
+    protected bool $has_render = true;
+    protected bool $render_input = true;
+    protected bool $render_search_keyword = true;
     private ?Closure $search_keyword_callback = null;
 
-    /**
-     * ListerFilter constructor.
-     */
     public function __construct()
     {
         $this->view_name = 'lister::' . Str::kebab(class_basename($this));
     }
 
-    /**
-     * @param mixed $input_name
-     * @return ListerFilter
-     */
-    public function setInputName($input_name)
+    public static function textfield(string $input_name, string $label = '', string $db_column = '')
+    {
+        return TextfieldFilter::make($input_name, $label, $db_column);
+    }
+
+    public static function select(string $input_name, string $label = '', string $db_column = '')
+    {
+        return SelectFilter::make($input_name, $label, $db_column);
+    }
+
+    public static function radio(string $input_name, string $label = '', string $db_column = '')
+    {
+        return RadioFilter::make($input_name, $label, $db_column);
+    }
+
+    public static function checkbox(string $input_name, string $label = '', string $db_column = '')
+    {
+        return CheckboxFilter::make($input_name, $label, $db_column);
+    }
+
+    public function setInputName(string $input_name): static
     {
         $this->input_name = $input_name;
-
-        // default db column name to input name
-        if (empty($this->db_column)) {
-            $this->db_column = $this->input_name;
-        }
 
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getInputName()
+    public function getInputName(): string
     {
         return $this->input_name;
     }
 
-    /**
-     * @param mixed $label
-     * @return ListerFilter
-     */
-    public function setLabel($label)
+    public function setLabel(string $label): static
     {
         $this->label = $label;
+
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getLabel()
+    public function getLabel(): string
     {
         return $this->label;
     }
 
-    /**
-     * @param mixed $db_column
-     * @return ListerFilter
-     */
-    public function setDbColumn($db_column)
+    public function setDbColumn(string $db_column): static
     {
         $this->db_column = $db_column;
+
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getDbColumn()
+    public function getDbColumn(): string
     {
-        return $this->db_column;
+        return $this->db_column ?: $this->input_name;
     }
 
-    /**
-     * @param mixed $search_operator
-     * @return ListerFilter
-     */
-    public function setSearchOperator($search_operator)
+    public function setSearchOperator(string $search_operator): static
     {
         $this->search_operator = strtoupper($search_operator);
+
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getSearchOperator()
+    public function getSearchOperator(): string
     {
         return $this->search_operator;
     }
 
-    /**
-     * @return string
-     */
-    public function getRawQuery()
+    public function getRawQuery(): string
     {
         return $this->raw_query;
     }
 
-    /**
-     * @param string|callable $raw_query
-     * @return ListerFilter
-     */
-    public function setRawQuery(string|callable $raw_query): ListerFilter
+    public function setRawQuery(string|callable $raw_query): static
     {
         $this->raw_query = is_callable($raw_query) ? $raw_query() : $raw_query;
+
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getDefaultRawQuery()
+    public function getDefaultRawQuery(): string
     {
         return $this->default_raw_query;
     }
 
-    /**
-     * @param string|callable $default_raw_query
-     * @return ListerFilter
-     */
-    public function setDefaultRawQuery(string|callable $default_raw_query): ListerFilter
+    public function setDefaultRawQuery(string|callable $default_raw_query): static
     {
         $this->default_raw_query = is_callable($default_raw_query) ? $default_raw_query() : $default_raw_query;
+
         return $this;
     }
 
-    /**
-     * @param \Closure $callback
-     * @return ListerFilter
-     */
     public function setSearchKeywordCallback(Closure $callback)
     {
         $this->search_keyword_callback = $callback;
@@ -243,81 +134,53 @@ abstract class ListerFilter
         return $this;
     }
 
-    /**
-     * @return array|string
-     */
-    public function getSearchKeyword()
+    public function getSearchKeyword(): mixed
     {
         return $this->search_keyword;
     }
 
-    /**
-     * @param array|string $search_keyword
-     * @return ListerFilter
-     */
-    public function setSearchKeyword($search_keyword): ListerFilter
+    public function setSearchKeyword(mixed $search_keyword): static
     {
         $this->search_keyword = $this->search_keyword_callback ? call_user_func($this->search_keyword_callback, $search_keyword) : $search_keyword;
 
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
 
-    /**
-     * @return bool
-     */
     public function isActive(): bool
     {
         return $this->is_active;
     }
 
-    /**
-     * @param bool $is_active
-     */
-    public function setActive(bool $is_active): void
+    public function setActive(bool $is_active): static
     {
         $this->is_active = $is_active;
-    }
 
-    /**
-     * @param string $view_name
-     * @return ListerFilter
-     */
-    public function setViewName(string $view_name): ListerFilter
-    {
-        $this->view_name = $view_name;
         return $this;
     }
 
-    /**
-     * @return string
-     */
+    public function setViewName(string $view_name): static
+    {
+        $this->view_name = $view_name;
+
+        return $this;
+    }
+
     public function getViewName(): string
     {
         return $this->view_name;
     }
 
-    /**
-     * Load the view for the widget.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function view()
+    public function view(): View
     {
         return view($this->getViewName());
     }
 
-    /**
-     * Build the view data.
-     */
-    protected function viewData()
+    protected function viewData(): void
     {
         $this->setViewData([
             'label' => $this->label,
@@ -326,100 +189,50 @@ abstract class ListerFilter
         ]);
     }
 
-    /**
-     * @param array $data
-     * @return $this
-     */
-    public function setViewData(array $data): ListerFilter
+    public function setViewData(array $data): static
     {
         $this->view_data = array_merge($this->view_data, $data);
+
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    public function noRender(): ListerFilter
+    public function noRender(): static
     {
         $this->has_render = false;
+
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function hasRender(): bool
     {
         return $this->has_render;
     }
 
-    /**
-     * @return $this
-     */
-    public function doNotRenderInput()
+    public function doNotRenderInput(): static
     {
         $this->render_input = false;
 
         return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function shouldRenderInput()
+    public function shouldRenderInput(): bool
     {
         return $this->render_input;
     }
 
-    /**
-     * @return $this
-     */
-    public function doNotRenderSearchKeyword()
+    public function doNotRenderSearchKeyword(): static
     {
         $this->render_search_keyword = false;
 
         return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function shouldRenderSearchKeyword()
+    public function shouldRenderSearchKeyword(): bool
     {
         return $this->render_search_keyword;
     }
 
-    /**
-     * Specify which class members are required
-     *
-     * @return array
-     */
-    public abstract function mandatoryProperties(): array;
-
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    public function validate(): bool
-    {
-        foreach ($this->mandatoryProperties() as $property) {
-            if (!isset($this->{$property})) {
-                throw new Exception(sprintf("Property %s must be set for this filter to work.", $property));
-            }
-
-            if (!is_array($this->{$property}) && empty($this->{$property})) {
-                throw new Exception(sprintf("Property %s must have a value set for this filter to work.", $property));
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @return array|string
-     * @throws \Throwable
-     */
-    public function render()
+    public function render(): string
     {
         $this->viewData();
 

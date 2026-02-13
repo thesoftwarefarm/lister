@@ -2,7 +2,7 @@
 
 namespace TsfCorp\Lister\Tests;
 
-use TsfCorp\Lister\Facades\ListerFilter;
+use TsfCorp\Lister\Filters\ListerFilter;
 
 class FiltersTest extends TestCase
 {

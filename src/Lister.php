@@ -15,63 +15,36 @@ use TsfCorp\Lister\Filters\ListerFilter;
 
 class Lister
 {
-    /**
-     * @var \Illuminate\Pagination\LengthAwarePaginator
-     */
-    public $results;
-    /**
-     * @var array
-     */
-    private $query_settings;
-    /**
-     * @var int
-     */
-    private $results_per_page = 10;
-    /**
-     * @var int
-     */
-    private $current_page = 1;
-    /**
-     * @var int
-     */
-    private $offset = 0;
-    /**
-     * @var string
-     */
-    private $sql_without_limits;
-    /**
-     * @var \Illuminate\Http\Request
-     */
-    private $request;
-    /**
-     * @var \Illuminate\Database\Connection
-     */
-    private $db;
-    /**
-     * @var \TsfCorp\Lister\Filters\ListerFilter[]|\Illuminate\Support\Collection
-     */
-    private $filters = null;
+    private Request $request;
+    private Connection $db;
+    private Collection $filters;
+    public ?LengthAwarePaginator $results = null;
+    private array $query_settings = [];
 
-    /**
-     * @param \Illuminate\Http\Request $request
-     * @param \Illuminate\Database\Connection $db
-     */
+    private int $results_per_page;
+    private int $current_page;
+    private int $offset;
+    private string $sql_without_limits = '';
+
     public function __construct(Request $request, Connection $db)
     {
         $this->request = $request;
         $this->db = $db;
-        $this->filters = new Collection([]);
+        $this->filters = new Collection();
 
-        $this->current_page = $this->request->get('page', $this->current_page);
-        $this->results_per_page = $this->request->get('rpp') ?? config('lister.results_per_page', 20);
+        $this->current_page = (int)$this->request->input('page', 1);
+        $this->results_per_page = (int)$this->request->input('rpp', config('lister.results_per_page', 20));
         $this->offset = $this->computeOffset();
     }
 
-    /**
-     * @param string|\Illuminate\Database\Connection $connection
-     * @return \TsfCorp\Lister\Lister
-     */
-    public function setConnection($connection)
+    public function make(array $query_settings): static
+    {
+        $this->query_settings = $query_settings;
+
+        return $this;
+    }
+
+    public function setConnection(string|Connection $connection): static
     {
         if (is_string($connection)) {
             $this->db = DB::connection($connection);
@@ -82,21 +55,12 @@ class Lister
         return $this;
     }
 
-    /**
-     * @return \Illuminate\Database\Connection
-     */
-    public function getConnection()
+    public function getConnection(): Connection
     {
         return $this->db;
     }
 
-    /**
-     * Returns the offset needed for executing the query,
-     * given the current 'results per page'/'current page' configuration.
-     *
-     * @return int
-     */
-    private function computeOffset()
+    private function computeOffset(): int
     {
         if ($this->current_page == 1) {
             return 0;
@@ -105,30 +69,8 @@ class Lister
         return $this->results_per_page * $this->current_page - $this->results_per_page;
     }
 
-    /**
-     * Returns a Lister instance with query settings applied.
-     *
-     * @param $query_settings
-     * @return \TsfCorp\Lister\Lister
-     */
-    public function make($query_settings): Lister
+    public function addFilter(ListerFilter $filter): static
     {
-        $this->query_settings = $query_settings;
-
-        return $this;
-    }
-
-    /**
-     * Add a new filter
-     *
-     * @param \TsfCorp\Lister\Filters\ListerFilter $filter
-     * @return \TsfCorp\Lister\Lister
-     * @throws Exception
-     */
-    public function addFilter(ListerFilter $filter): Lister
-    {
-        $filter->validate();
-
         $this->filters->push([
             'type' => 'where',
             'filter' => $filter,
@@ -137,13 +79,7 @@ class Lister
         return $this;
     }
 
-    /**
-     * Add a new filter for HAVING
-     *
-     * @param \TsfCorp\Lister\Filters\ListerFilter $filter
-     * @return \TsfCorp\Lister\Lister
-     */
-    public function addHavingFilter(ListerFilter $filter): Lister
+    public function addHavingFilter(ListerFilter $filter): static
     {
         $this->filters->push([
             'type' => 'having',
@@ -153,16 +89,7 @@ class Lister
         return $this;
     }
 
-    /**
-     * Fetches records and total figure and creates a paginator instance.
-     * Returns a Lister instance where the 'results' member variable is populated with paginated results.
-     * By exposing the 'results' member variable, the results can be intercepted
-     * and altered in the controller before being sent to the view.
-     *
-     * @return \TsfCorp\Lister\Lister
-     * @throws \ErrorException
-     */
-    public function get()
+    public function get(): static
     {
         $paginated_results = new LengthAwarePaginator(
             $this->fetchRecords(),
@@ -179,13 +106,7 @@ class Lister
         return $this;
     }
 
-    /**
-     * Executes the query and returns a results array.
-     *
-     * @return array
-     * @throws \ErrorException
-     */
-    private function fetchRecords()
+    private function fetchRecords(): array|\Illuminate\Database\Eloquent\Collection
     {
         try {
             $results = $this->db->select($this->buildQuery());
@@ -204,13 +125,7 @@ class Lister
         return $results;
     }
 
-    /**
-     * Builds and returns an SQL query that combines filters, sorting rules and pagination settings.
-     *
-     * @return string
-     * @throws \ErrorException
-     */
-    private function buildQuery()
+    private function buildQuery(): string
     {
         // add where clause to query body
         $where_clause = $this->buildConditionsSql($this->filters->filter(function ($entry) {
@@ -275,7 +190,7 @@ class Lister
                 $filter->setActive(true);
                 $wheres[] = $filter->getRawQuery();
             } else {
-                $filter->setSearchKeyword($this->request->get($filter->getInputName()));
+                $filter->setSearchKeyword($this->request->input($filter->getInputName()));
 
                 $searched_keyword = $filter->getSearchKeyword();
 
@@ -324,38 +239,31 @@ class Lister
         return $wheres;
     }
 
-    /**
-     * Get sort field and direction
-     *
-     * @return string
-     * @throws Exception
-     */
-    private function getSortBy()
+    private function getSortBy(): string
     {
         if (empty($this->query_settings['sortables'])) {
-            return "";
+            return '';
         }
 
         if ($this->request->has('sortf')) {
-            $sort_field = $this->request->get('sortf');
+            $sort_field = $this->request->input('sortf');
         } else if (isset($this->query_settings['sortables'])) {
             $sort_field = '';
 
-            foreach ($this->query_settings['sortables'] as $sortfield => $sort_direction) {
-                if (in_array($sort_direction, ['asc', 'desc'])) {
-                    $sort_field = $sortfield;
+            foreach ($this->query_settings['sortables'] as $field => $direction) {
+                if (in_array($direction, ['asc', 'desc'])) {
+                    $sort_field = $field;
                     break;
                 }
             }
         }
 
-        // without a field, no need to check for sort direction
-        if (empty($sort_field)) {
-            return "";
+        if (!$sort_field) {
+            return '';
         }
 
         if (!isset($this->query_settings['sortables'][$sort_field])) {
-            return "";
+            return '';
         }
 
         $sort_direction = $this->request->input('sortd', $this->query_settings['sortables'][$sort_field] ?? 'asc');
@@ -367,24 +275,17 @@ class Lister
         return sprintf("%s %s", $sort_field, $sort_direction);
     }
 
-    private function forgetFilters()
+    private function forgetFilters(): void
     {
-        $uri = $this->request->path();
-
-        Session::forget('filters.' . $uri);
+        Session::forget("filters.{$this->request->path()}");
     }
 
-    /**
-     * Returns the total (unfiltered) number of results.
-     *
-     * @return int
-     */
-    private function fetchTotal()
+    private function fetchTotal(): int
     {
         $rows_query = $this->getUnlimitedSQLQuery();
         $sort_by = $this->getSortBy();
 
-        if (!empty($sort_by)) {
+        if ($sort_by) {
             $rows_query = trim(str_replace(sprintf("ORDER BY %s", $sort_by), "", $rows_query));
 
             $remove_empty_filter = "WHERE (1)";
@@ -395,95 +296,61 @@ class Lister
 
         $result = $this->db->select(sprintf("SELECT COUNT(*) as total FROM (%s) as total_count_table", $rows_query));
 
-        if (empty($result) || !is_array($result))
+        if (empty($result) || !is_array($result)) {
             return 0;
+        }
 
         if (count($result) == 1) {
-            return $result[0]->total;
-        } else {
-            // this is when a group by is applied to main query
-            return count($result);
+            return (int)$result[0]->total;
         }
+
+        // this is when a group by is applied to main query
+        return count($result);
     }
 
-    /**
-     * @return int
-     */
-    public function getResultsPerPage()
+    public function getResultsPerPage(): int
     {
         return $this->results_per_page;
     }
 
-    /**
-     * @param $results_per_page
-     * @return void
-     */
-    public function setResultsPerPage($results_per_page)
+    public function setResultsPerPage(int $results_per_page)
     {
-        $this->results_per_page = (int)$results_per_page;
+        $this->results_per_page = $results_per_page;
         $this->offset = $this->computeOffset();
     }
 
-    /**
-     * @return \Illuminate\Pagination\LengthAwarePaginator
-     */
-    public function getResults()
+    public function getResults(): ?LengthAwarePaginator
     {
         return $this->results;
     }
 
-    /**
-     * @return bool
-     */
-    public function isFiltered()
+    public function isFiltered(): bool
     {
-        return $this->getActiveFilters()->count() ? true : false;
+        return (bool)$this->getActiveFilters()->count();
     }
 
-    /**
-     * A getter for the SQL query without limits applied.
-     *
-     * @return string
-     */
-    public function getUnlimitedSQLQuery()
+    public function getUnlimitedSQLQuery(): string
     {
-        return $this->makeOneLiner($this->sql_without_limits);
+        return trim(preg_replace('/\s+/', ' ', $this->sql_without_limits));
     }
 
-    /**
-     * Given a string, returns a stripped version, where newlines and extra spaces are removed.
-     *
-     * @param string $string
-     * @return string
-     */
-    private function makeOneLiner($string = "")
-    {
-        return trim(preg_replace('/\s+/', ' ', $string));
-    }
-
-    /**
-     * Given a sorting field, this returns an URL having this field as a sort parameter.
-     *
-     * @param string $sortf
-     * @return string
-     */
-    public function sortLink($sortf = "")
+    public function sortLink(string $sortf): string
     {
         $default_sortf = "";
         $default_sortd = "";
 
         if (isset($this->query_settings['sortables'])) {
-            foreach ($this->query_settings['sortables'] as $sortfield => $sortdir) {
-                if (in_array($sortdir, array('asc', 'desc'))) {
-                    $default_sortf = $sortfield;
-                    $default_sortd = $sortdir;
+            foreach ($this->query_settings['sortables'] as $field => $direction) {
+                if (in_array($direction, ['asc', 'desc'])) {
+                    $default_sortf = $field;
+                    $default_sortd = $direction;
                     break;
                 }
             }
         }
 
-        $current_sortf = $this->request->get('sortf', $default_sortf);
-        $current_sortd = $this->request->get('sortd', $default_sortd);
+        $current_sortf = $this->request->input('sortf', $default_sortf);
+        $current_sortd = $this->request->input('sortd', $default_sortd);
 
         if ($current_sortf == $sortf) {
             $sortd = $current_sortd == 'asc' ? 'desc' : 'asc';
@@ -496,38 +363,32 @@ class Lister
         $query_string_array['sortf'] = $sortf;
         $query_string_array['sortd'] = $sortd;
 
-        $parts = array();
+        $parts = [];
 
         foreach ($query_string_array as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $item) {
-                    $parts[] = $key . '[]=' . $item;
+                    $parts[] = "{$key}[]={$item}";
                 }
             } elseif (strlen($value)) {
-                $parts[] = $key . '=' . $value;
+                $parts[] = "{$key}={$value}";
             }
         }
 
         $normalized_query_string = $this->request->normalizeQueryString(implode('&', $parts));
 
-        return $this->request->url() . '?' . $normalized_query_string;
+        return "{$this->request->url()}?{$normalized_query_string}";
     }
 
-    /**
-     * Given a sorting field, this returns the CSS classes to be applied to the corresponding sorting button.
-     *
-     * @param string $sortf
-     * @return string
-     */
-    public function sortDir($sortf = "")
+    public function sortDir(string $sortf): string
     {
         // currently sorting by field ...
-        $current_sortf = $this->request->get('sortf');
+        $current_sortf = $this->request->input('sortf');
 
         // ... asc or desc
-        $current_sortd = $this->request->get('sortd');
+        $current_sortd = $this->request->input('sortd');
 
-        $sort_dir = "";
+        $sort_dir = '';
 
         if ((empty($current_sortf) || empty($current_sortd)) && isset($this->query_settings['sortables']) && !empty($this->query_settings['sortables'][$sortf])) {
             // $sortf is the default sorting field
@@ -543,16 +404,11 @@ class Lister
         } elseif ($sort_dir == 'desc') {
             return config('lister.css_clas_sort_desc', 'sort-asc active');
         } else {
-            return "";
+            return '';
         }
     }
 
-    /**
-     * Removes empty query params from the query string.
-     *
-     * @return bool|string
-     */
-    public function cleanQueryString()
+    public function cleanQueryString(): string
     {
         $query_string_array = $this->request->all();
         $clean_query_string_array = [];
@@ -561,17 +417,17 @@ class Lister
         foreach ($query_string_array as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $item) {
-                    if (strlen($item) == 0) {
+                    if (strlen((string)$item) == 0) {
                         $needs_redirect = true;
                     } else {
-                        $clean_query_string_array[] = $key . '[]=' . urlencode($item);
+                        $clean_query_string_array[] = "{$key}[]=" . urlencode((string)$item);
                     }
                 }
             } else {
-                if (strlen($value) == 0) {
+                if (strlen((string)$value) == 0) {
                     $needs_redirect = true;
                 } else {
-                    $clean_query_string_array[] = $key . '=' . urlencode($value);
+                    $clean_query_string_array[] = "{$key}=" . urlencode((string)$value);
                 }
             }
         }
@@ -579,23 +435,17 @@ class Lister
         $normalized_query_string = $this->request->normalizeQueryString(implode('&', $clean_query_string_array));
 
         if ($needs_redirect) {
-            return $this->request->url() . '?' . $normalized_query_string;
-        } else {
-            return false;
+            return "{$this->request->url()}?{$normalized_query_string}";
         }
 
+        return '';
     }
 
-    /**
-     * Housekeeping for URLs kept in session and for filters reset.
-     *
-     * @return bool|mixed|string
-     */
-    public function rememberFilters()
+    public function rememberFilters(): string|bool
     {
         $uri = $this->request->path();
 
-        $remembered = Session::get('filters.' . $uri);
+        $remembered = Session::get("filters.{$uri}");
         $input_query = $this->request->all();
 
         if ((!!$remembered && !count($input_query)) || $this->request->exists('reset')) {
@@ -608,37 +458,30 @@ class Lister
             }
         }
 
-        $clean_query_string_array = array();
+        $clean_query_string_array = [];
 
         if (count($input_query)) {
             foreach ($input_query as $key => $value) {
                 if (is_array($value)) {
                     foreach ($value as $item) {
-                        $clean_query_string_array[] = $key . '[]=' . $item;
+                        $clean_query_string_array[] = "{$key}[]={$item}";
                     }
-                } elseif (strlen($value)) {
-                    $clean_query_string_array[] = $key . '=' . $value;
+                } elseif (strlen((string)$value)) {
+                    $clean_query_string_array[] = "{$key}={$value}";
                 }
             }
 
             $query_strings = $this->request->normalizeQueryString(implode('&', $clean_query_string_array));
 
-            $query_strings = !empty($query_strings) ? '?' . $query_strings : $query_strings;
+            $query_strings = !empty($query_strings) ? "?{$query_strings}" : $query_strings;
 
-            Session::put('filters.' . $uri, $uri . $query_strings);
+            Session::put("filters.{$uri}", $uri . $query_strings);
         }
 
         return false;
     }
 
-    /**
-     * Returns an URL to redirect to if either:
-     *  - there is a remembered URL in session
-     *  - query string clean up has been performed
-     *
-     * @return null|string
-     */
-    public function getRedirectUrl()
+    public function getRedirectUrl(): ?string
     {
         if ($remembered = $this->rememberFilters()) {
             return $remembered;
@@ -651,40 +494,25 @@ class Lister
         return null;
     }
 
-    /**
-     * Bulid result index to display in listing screens
-     *
-     * @param int $index
-     * @return mixed
-     */
-    public function getResultIndex($index = 0)
+    public function getResultIndex(int $index = 0): int
     {
         return max($index, 0) + 1 + $this->getResultsPerPage() * ($this->current_page - 1);
     }
 
     /**
-     * Returns all defined filters for this instance
-     *
-     * @return Collection|ListerFilter[]
+     * @return \Illuminate\Support\Collection<int, \TsfCorp\Lister\Filters\ListerFilter>
      */
-    public function getFilters()
+    public function getFilters(): Collection
     {
-        return $this->filters->map(function ($entry) {
-            return $entry['filter'];
-        });
+        return $this->filters->map(fn($entry) => $entry['filter']);
     }
 
     /**
-     * @return \TsfCorp\Lister\Filters\ListerFilter[]|\Illuminate\Support\Collection
+     * @return \Illuminate\Support\Collection<int, \TsfCorp\Lister\Filters\ListerFilter>
      */
-    public function getActiveFilters()
+    public function getActiveFilters(): Collection
     {
-        return $this->filters->map(function ($entry) {
-            return $entry['filter'];
-        })->filter(function ($filter) {
-            /** @var ListerFilter $filter */
-            return $filter->isActive();
-        });
+        return $this->getFilters()->filter(fn(ListerFilter $filter) => $filter->isActive());
     }
 
     public function __call($name, $arguments)

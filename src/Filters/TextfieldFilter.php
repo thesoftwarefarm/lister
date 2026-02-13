@@ -2,24 +2,18 @@
 
 namespace TsfCorp\Lister\Filters;
 
-/**
- * Class TextfieldFilter
- * @package TsfCorp\Lister\Filters
- */
+use Illuminate\Support\Str;
+
 class TextfieldFilter extends ListerFilter
 {
-    protected $type = self::TYPE_INPUT;
+    protected string $type = self::TYPE_INPUT;
 
-    /**
-     * @inheritDoc
-     */
-    public function mandatoryProperties(): array
+    public static function make(string $input_name, string $label = '', string $db_column = '')
     {
-        return [
-            'label',
-            'input_name',
-            'db_column',
-            'search_operator',
-        ];
+        return (new static())
+            ->setInputName($input_name)
+            ->setLabel($label)
+            ->setDbColumn($db_column)
+            ->setViewName('lister::' . Str::kebab(class_basename(self::class)));
     }
 }

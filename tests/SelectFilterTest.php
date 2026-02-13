@@ -3,21 +3,17 @@
 namespace TsfCorp\Lister\Tests;
 
 use Exception;
-use TsfCorp\Lister\Facades\ListerFilter;
+use TsfCorp\Lister\Filters\ListerFilter;
 
 class SelectFilterTest extends TestCase
 {
     function test_filter_is_rendered_properly()
     {
-        $filter = ListerFilter::select()
-            ->setInputName("test-select")
-            ->setLabel("test-label-select")
-            ->setDbColumn("aaa")
-            ->setSearchOperator("=")
+        $filter = ListerFilter::select('test-select', 'test-label-select')
             ->setItems([
-                'a' => "Option 1",
-                'b' => "Option 2",
-                'c' => "Option 3",
+                'a' => 'Option 1',
+                'b' => 'Option 2',
+                'c' => 'Option 3',
             ])
             ->render();
 
@@ -29,17 +25,13 @@ class SelectFilterTest extends TestCase
 
     function test_filter_is_not_added_when_search_keyword_is_not_in_set()
     {
-        $filter = ListerFilter::select()
-            ->setInputName("test-select")
-            ->setLabel("test-label-select")
-            ->setDbColumn("aaa")
-            ->setSearchOperator("=")
+        $filter = ListerFilter::select('test-select')
             ->setItems([
-                'a' => "Option 1",
-                'b' => "Option 2",
-                'c' => "Option 3",
+                'a' => 'Option 1',
+                'b' => 'Option 2',
+                'c' => 'Option 3',
             ])
-            ->setSearchKeyword("d");
+            ->setSearchKeyword('d');
 
         $this->assertEmpty($filter->getSearchKeyword());
     }
