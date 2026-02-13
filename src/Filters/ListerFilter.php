@@ -3,7 +3,6 @@
 namespace TsfCorp\Lister\Filters;
 
 use Closure;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 abstract class ListerFilter
@@ -16,23 +15,18 @@ abstract class ListerFilter
     public const TYPE_RAW = "raw";
 
     protected string $type;
-    protected string $input_name;
+    protected string $input_name = '';
     protected string $label = '';
     protected string $db_column = '';
     protected mixed $search_keyword = null;
     protected string $search_operator = '=';
     protected string $raw_query = '';
     protected string $default_raw_query = '';
-    protected bool $is_active = false;
-    protected string $view_name;
+    protected string $view_name = '';
     protected array $view_data = [];
+    protected bool $is_active = false;
     protected bool $render_input = true;
     private ?Closure $search_keyword_callback = null;
-
-    public function __construct()
-    {
-        $this->view_name = 'lister::' . Str::kebab(class_basename($this));
-    }
 
     public static function textfield(string $input_name, string $label = '', string $db_column = '')
     {
@@ -57,6 +51,11 @@ abstract class ListerFilter
     public static function checkbox(string $input_name, string $label = '', string $db_column = '')
     {
         return CheckboxFilter::make($input_name, $label, $db_column);
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
     }
 
     public function setInputName(string $input_name): static
@@ -95,6 +94,25 @@ abstract class ListerFilter
         return $this->db_column ?: $this->input_name;
     }
 
+    public function setSearchKeyword(mixed $search_keyword): static
+    {
+        $this->search_keyword = $this->search_keyword_callback ? call_user_func($this->search_keyword_callback, $search_keyword) : $search_keyword;
+
+        return $this;
+    }
+
+    public function getSearchKeyword(): mixed
+    {
+        return $this->search_keyword;
+    }
+
+    public function setSearchKeywordCallback(Closure $callback)
+    {
+        $this->search_keyword_callback = $callback;
+
+        return $this;
+    }
+
     public function setSearchOperator(string $search_operator): static
     {
         $this->search_operator = strtoupper($search_operator);
@@ -107,11 +125,6 @@ abstract class ListerFilter
         return $this->search_operator;
     }
 
-    public function getRawQuery(): string
-    {
-        return $this->raw_query;
-    }
-
     public function setRawQuery(string|callable $raw_query): static
     {
         $this->raw_query = is_callable($raw_query) ? $raw_query() : $raw_query;
@@ -119,9 +132,9 @@ abstract class ListerFilter
         return $this;
     }
 
-    public function getDefaultRawQuery(): string
+    public function getRawQuery(): string
     {
-        return $this->default_raw_query;
+        return $this->raw_query;
     }
 
     public function setDefaultRawQuery(string|callable $default_raw_query): static
@@ -131,40 +144,9 @@ abstract class ListerFilter
         return $this;
     }
 
-    public function setSearchKeywordCallback(Closure $callback)
+    public function getDefaultRawQuery(): string
     {
-        $this->search_keyword_callback = $callback;
-
-        return $this;
-    }
-
-    public function getSearchKeyword(): mixed
-    {
-        return $this->search_keyword;
-    }
-
-    public function setSearchKeyword(mixed $search_keyword): static
-    {
-        $this->search_keyword = $this->search_keyword_callback ? call_user_func($this->search_keyword_callback, $search_keyword) : $search_keyword;
-
-        return $this;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->is_active;
-    }
-
-    public function setActive(bool $is_active): static
-    {
-        $this->is_active = $is_active;
-
-        return $this;
+        return $this->default_raw_query;
     }
 
     public function setViewName(string $view_name): static
@@ -179,9 +161,28 @@ abstract class ListerFilter
         return $this->view_name;
     }
 
-    public function view(): View
+    public function setActive(bool $is_active): static
     {
-        return view($this->getViewName());
+        $this->is_active = $is_active;
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function doNotRenderInput(): static
+    {
+        $this->render_input = false;
+
+        return $this;
+    }
+
+    public function shouldRenderInput(): bool
+    {
+        return $this->render_input;
     }
 
     protected function viewData(): void
@@ -200,22 +201,10 @@ abstract class ListerFilter
         return $this;
     }
 
-    public function doNotRenderInput(): static
-    {
-        $this->render_input = false;
-
-        return $this;
-    }
-
-    public function shouldRenderInput(): bool
-    {
-        return $this->render_input;
-    }
-
     public function render(): string
     {
         $this->viewData();
 
-        return $this->view()->with($this->view_data)->render();
+        return view($this->getViewName())->with($this->view_data)->render();
     }
 }
