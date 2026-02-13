@@ -3,7 +3,6 @@
 namespace TsfCorp\Lister\Filters;
 
 use Closure;
-use Illuminate\View\View;
 
 abstract class ListerFilter
 {
