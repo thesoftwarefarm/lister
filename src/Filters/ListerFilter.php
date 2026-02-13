@@ -26,9 +26,7 @@ abstract class ListerFilter
     protected bool $is_active = false;
     protected string $view_name;
     protected array $view_data = [];
-    protected bool $has_render = true;
     protected bool $render_input = true;
-    protected bool $render_search_keyword = true;
     private ?Closure $search_keyword_callback = null;
 
     public function __construct()
@@ -202,18 +200,6 @@ abstract class ListerFilter
         return $this;
     }
 
-    public function noRender(): static
-    {
-        $this->has_render = false;
-
-        return $this;
-    }
-
-    public function hasRender(): bool
-    {
-        return $this->has_render;
-    }
-
     public function doNotRenderInput(): static
     {
         $this->render_input = false;
@@ -224,18 +210,6 @@ abstract class ListerFilter
     public function shouldRenderInput(): bool
     {
         return $this->render_input;
-    }
-
-    public function doNotRenderSearchKeyword(): static
-    {
-        $this->render_search_keyword = false;
-
-        return $this;
-    }
-
-    public function shouldRenderSearchKeyword(): bool
-    {
-        return $this->render_search_keyword;
     }
 
     public function render(): string
