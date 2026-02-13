@@ -10,6 +10,7 @@ abstract class ListerFilter
 {
     public const TYPE_INPUT = "input";
     public const TYPE_SELECT = "select";
+    public const TYPE_GROUP_SELECT = "group-select";
     public const TYPE_CHECKBOX = "checkbox";
     public const TYPE_RADIO = "radio";
     public const TYPE_RAW = "raw";
@@ -43,6 +44,11 @@ abstract class ListerFilter
     public static function select(string $input_name, string $label = '', string $db_column = '')
     {
         return SelectFilter::make($input_name, $label, $db_column);
+    }
+
+    public static function groupSelect(string $input_name, string $label = '', string $db_column = '')
+    {
+        return GroupSelectFilter::make($input_name, $label, $db_column);
     }
 
     public static function radio(string $input_name, string $label = '', string $db_column = '')
