@@ -20,15 +20,4 @@ class FiltersTest extends TestCase
         $this->assertStringContainsString('input-label', $rendered);
         $this->assertStringContainsString('input-name', $rendered);
     }
-
-    function test_it_renders_custom_view()
-    {
-        $filter = ListerFilter::textfield("test-input", "test-label")
-            ->setViewName("custom-filter")
-            ->setViewData([
-                'custom_title' => "My custom title"
-            ]);
-
-        $this->assertStringContainsString('My custom title', $filter->render());
-    }
 }

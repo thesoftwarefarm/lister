@@ -25,15 +25,6 @@ class GroupSelectFilter extends ListerFilter
         return $this;
     }
 
-    protected function viewData(): void
-    {
-        parent::viewData();
-
-        $this->setViewData([
-            'items' => $this->items,
-        ]);
-    }
-
     public function setSearchKeyword(mixed $search_keyword): static
     {
         if (in_array($search_keyword, array_keys($this->getFlattenItems()))) {
@@ -46,5 +37,12 @@ class GroupSelectFilter extends ListerFilter
     public function getFlattenItems(): array
     {
         return collect($this->items)->mapWithKeys(fn($i) => $i)->toArray();
+    }
+
+    protected function getViewData(): array
+    {
+        return array_merge(parent::getViewData(), [
+            'items' => $this->items,
+        ]);
     }
 }

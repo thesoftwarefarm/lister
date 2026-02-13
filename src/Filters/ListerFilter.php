@@ -22,7 +22,6 @@ abstract class ListerFilter
     protected string $raw_query = '';
     protected string $default_raw_query = '';
     protected string $view_name = '';
-    protected array $view_data = [];
     protected bool $is_active = false;
     protected bool $render_input = true;
     private ?Closure $search_keyword_callback = null;
@@ -184,26 +183,17 @@ abstract class ListerFilter
         return $this->render_input;
     }
 
-    protected function viewData(): void
+    protected function getViewData(): array
     {
-        $this->setViewData([
+        return [
             'label' => $this->label,
             'input_name' => $this->input_name,
             'search_keyword' => $this->search_keyword,
-        ]);
-    }
-
-    public function setViewData(array $data): static
-    {
-        $this->view_data = array_merge($this->view_data, $data);
-
-        return $this;
+        ];
     }
 
     public function render(): string
     {
-        $this->viewData();
-
-        return view($this->getViewName())->with($this->view_data)->render();
+        return view($this->getViewName(), $this->getViewData())->render();
     }
 }

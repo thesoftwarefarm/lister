@@ -25,15 +25,6 @@ class RadioFilter extends ListerFilter
         return $this;
     }
 
-    protected function viewData(): void
-    {
-        parent::viewData();
-
-        $this->setViewData([
-            'items' => $this->items,
-        ]);
-    }
-
     public function setSearchKeyword(mixed $search_keyword): static
     {
         if (in_array($search_keyword, array_keys($this->items))) {
@@ -41,5 +32,12 @@ class RadioFilter extends ListerFilter
         }
 
         return $this;
+    }
+
+    protected function getViewData(): array
+    {
+        return array_merge(parent::getViewData(), [
+            'items' => $this->items,
+        ]);
     }
 }
