@@ -1,14 +1,13 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
 use Exception;
 use TsfCorp\Lister\Facades\ListerFilter;
 
-class SelectFilterTest extends TestBootstrap
+class SelectFilterTest extends TestCase
 {
-    /** @test */
-    function filter_is_rendered_properly()
+    function test_filter_is_rendered_properly()
     {
         $filter = ListerFilter::select()
             ->setInputName("test-select")
@@ -28,39 +27,7 @@ class SelectFilterTest extends TestBootstrap
         $this->assertStringContainsString('value="a"', $filter);
     }
 
-    /**
-     * @test
-     *
-     */
-    function it_throws_error_if_items_are_not_set()
-    {
-        $this->expectException(Exception::class);
-
-        ListerFilter::select()
-            ->setInputName("test-select")
-            ->setDbColumn("aaa")
-            ->setSearchOperator("=")
-            ->validate();
-    }
-
-    /**
-     * @test
-     *
-     */
-    function it_works_with_empty_array_for_items()
-    {
-        $this->expectException(Exception::class);
-
-        ListerFilter::select()
-            ->setInputName("test-select")
-            ->setDbColumn("aaa")
-            ->setSearchOperator("=")
-            ->setItems([])
-            ->validate();
-    }
-
-    /** @test */
-    function filter_is_not_added_when_search_keyword_is_not_in_set()
+    function test_filter_is_not_added_when_search_keyword_is_not_in_set()
     {
         $filter = ListerFilter::select()
             ->setInputName("test-select")

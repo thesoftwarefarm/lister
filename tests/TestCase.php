@@ -1,17 +1,16 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\View;
-use Orchestra\Testbench\TestCase;
-use TsfCorp\Lister\Test\Models\Role;
-use TsfCorp\Lister\Test\Models\User;
+use Orchestra\Testbench\TestCase as Orchestra;
+use TsfCorp\Lister\Tests\Models\Role;
+use TsfCorp\Lister\Tests\Models\User;
 
-class TestBootstrap extends TestCase
+class TestCase extends Orchestra
 {
-    use RefreshDatabase, WithFaker;
+    use WithFaker;
 
     protected function setUp(): void
     {
@@ -38,7 +37,7 @@ class TestBootstrap extends TestCase
         // create roles
         $roles = collect([]);
         for ($i = 0; $i < 50; $i++) {
-            $role = Role::create([
+            $role = Role::forceCreate([
                 'name' => $this->faker->name,
             ]);
 
@@ -52,7 +51,7 @@ class TestBootstrap extends TestCase
 
         for ($i = 0; $i < 50; $i++) {
             /** @var User $user */
-            $user = User::create([
+            $user = User::forceCreate([
                 'email' => $this->faker->email,
                 'name' => $this->faker->name,
                 'password' => $this->faker->password,
@@ -62,11 +61,6 @@ class TestBootstrap extends TestCase
         }
     }
 
-    /**
-     * Set up the environment.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     */
     protected function getEnvironmentSetUp($app)
     {
         $app['config']->set('lister.results_per_page', 10);

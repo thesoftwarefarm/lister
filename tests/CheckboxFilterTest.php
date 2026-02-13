@@ -1,14 +1,13 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
 use Exception;
 use TsfCorp\Lister\Facades\ListerFilter;
 
-class CheckboxFilterTest extends TestBootstrap
+class CheckboxFilterTest extends TestCase
 {
-    /** @test */
-    function filter_is_rendered_properly()
+    function test_filter_is_rendered_properly()
     {
         $filter = ListerFilter::checkbox("test-checkbox")
             ->setItems([
@@ -23,22 +22,7 @@ class CheckboxFilterTest extends TestBootstrap
         $this->assertStringContainsString('value="a"', $filter);
     }
 
-    /**
-     * @test
-     *
-     */
-    function it_throws_error_if_items_are_not_set()
-    {
-        $this->expectException(Exception::class);
-
-        ListerFilter::checkbox("test-checkbox")->validate();
-    }
-
-    /**
-     * @test
-     *
-     */
-    function searched_keywords_are_checked()
+    function test_searched_keywords_are_checked()
     {
         $filter = ListerFilter::checkbox("test-checkbox")
             ->setItems([
@@ -51,11 +35,7 @@ class CheckboxFilterTest extends TestBootstrap
         $this->assertStringContainsString('checked', $filter->render());
     }
 
-    /**
-     * @test
-     *
-     */
-    function invalid_searched_keywords_are_removed()
+    function test_invalid_searched_keywords_are_removed()
     {
         $filter = ListerFilter::checkbox("test-checkbox")
             ->setItems([

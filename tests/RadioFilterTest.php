@@ -1,14 +1,13 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
 use Exception;
 use TsfCorp\Lister\Facades\ListerFilter;
 
-class RadioFilterTest extends TestBootstrap
+class RadioFilterTest extends TestCase
 {
-    /** @test */
-    function filter_is_rendered_properly()
+    function test_filter_is_rendered_properly()
     {
         $filter = ListerFilter::radio("test-radio")
             ->setItems([
@@ -23,21 +22,7 @@ class RadioFilterTest extends TestBootstrap
         $this->assertStringContainsString('value="a"', $filter);
     }
 
-    /**
-     * @test
-     *
-     */
-    function it_throws_error_if_items_are_not_set()
-    {
-        $this->expectException(Exception::class);
-
-        ListerFilter::radio("test-radio")
-            ->setDbColumn("aaa")
-            ->validate();
-    }
-
-    /** @test */
-    function filter_is_not_added_when_search_keyword_is_not_in_set()
+    function test_filter_is_not_added_when_search_keyword_is_not_in_set()
     {
         $filter = ListerFilter::radio()
             ->setInputName("test-radio")

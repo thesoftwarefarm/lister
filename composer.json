@@ -21,11 +21,10 @@
     ],
     "require": {
         "php": ">=7.1",
-        "laravel/framework": "^5.4|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0"
+        "laravel/framework": "^9.0|^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^8.0",
-        "orchestra/testbench": "~4.0"
+        "orchestra/testbench": "^10.0"
     },
     "autoload": {
         "psr-4": {
@@ -34,7 +33,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "TsfCorp\\Lister\\Test\\": "tests"
+            "TsfCorp\\Lister\\Tests\\": "tests"
         }
     },
     "config": {

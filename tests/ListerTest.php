@@ -1,6 +1,6 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
@@ -9,16 +9,12 @@ use Illuminate\Support\Facades\DB;
 use TsfCorp\Lister\Exceptions\ListerException;
 use TsfCorp\Lister\Facades\ListerFilter;
 use TsfCorp\Lister\Lister;
-use TsfCorp\Lister\Test\Models\Role;
-use TsfCorp\Lister\Test\Models\User;
+use TsfCorp\Lister\Tests\Models\Role;
+use TsfCorp\Lister\Tests\Models\User;
 
-class ListerTest extends TestBootstrap
+class ListerTest extends TestCase
 {
-    /**
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_build_a_lister_based_on_query_settings()
+    public function test_it_build_a_lister_based_on_query_settings()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -38,11 +34,7 @@ class ListerTest extends TestBootstrap
         $this->assertEquals(10, $listing->getResults()->count());
     }
 
-    /**
-     * Test pagination is applied for custom rpp - results per page
-     * @test
-     */
-    public function it_returns_total_records_for_paginated_results()
+    public function test_it_returns_total_records_for_paginated_results()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -54,7 +46,7 @@ class ListerTest extends TestBootstrap
             ],
         ];
 
-        $request = new Request([], [], ['rpp' => 3]);
+        $request = new Request(query: ['rpp' => 3]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $listing = $lister->make($query_settings)->get();
@@ -64,11 +56,7 @@ class ListerTest extends TestBootstrap
         $this->assertEquals(User::count(), $listing->getResults()->total());
     }
 
-    /**
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_sets_current_page_based_on_request_data()
+    public function test_it_sets_current_page_based_on_request_data()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -80,7 +68,7 @@ class ListerTest extends TestBootstrap
             ],
         ];
 
-        $request = new Request([], [], ['page' => 3]);
+        $request = new Request(query: ['page' => 3]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $listing = $lister->make($query_settings)->get();
@@ -89,21 +77,15 @@ class ListerTest extends TestBootstrap
         $this->assertFalse($listing->isFiltered());
     }
 
-    /**
-     * Email filter is applied and filtered based on LIKE operator
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_applies_filters_with_like_operator()
+    public function test_it_applies_filters_with_like_operator()
     {
-        User::create([
+        User::forceCreate([
             'email' => "test123@mail.com",
             'name' => "User 1",
             'password' => "123456",
         ]);
 
-        User::create([
+        User::forceCreate([
             'email' => "test123@test.com",
             'name' => "User 2",
             'password' => "123456",
@@ -124,7 +106,7 @@ class ListerTest extends TestBootstrap
             ->setSearchOperator("LIKE");
 
         $filter_email = 'test123';
-        $request = new Request([], [], ['filter_email' => $filter_email]);
+        $request = new Request(query: ['filter_email' => $filter_email]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -141,15 +123,9 @@ class ListerTest extends TestBootstrap
         $this->assertEquals('test123', $active_filters->first()->getSearchKeyword());
     }
 
-    /**
-     * Email filter is applied and filtered based on strict (=) operator
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_applies_filters_with_strict_operator()
+    public function test_it_applies_filters_with_strict_operator()
     {
-        User::create([
+        User::forceCreate([
             'email' => "test123@mail.com",
             'name' => "User 1",
             'password' => "123456",
@@ -170,7 +146,7 @@ class ListerTest extends TestBootstrap
             ->setSearchOperator("=");
 
         $filter_email = 'test123@mail.com';
-        $request = new Request([], [], ['filter_email' => $filter_email]);
+        $request = new Request(query: ['filter_email' => $filter_email]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -187,21 +163,15 @@ class ListerTest extends TestBootstrap
         $this->assertTrue($lister->isFiltered());
     }
 
-    /**
-     * Filter is applied with raw query
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_applies_filters_with_raw_query()
+    public function test_it_applies_filters_with_raw_query()
     {
-        User::create([
+        User::forceCreate([
             'email' => "test1@mail.com",
             'name' => "test1",
             'password' => "123456",
         ]);
 
-        User::create([
+        User::forceCreate([
             'email' => "test2@mail.com",
             'name' => "test2",
             'password' => "123456",
@@ -220,7 +190,7 @@ class ListerTest extends TestBootstrap
         $filter = ListerFilter::textfield("keyword", "Email")
             ->setRawQuery("email LIKE '%{keyword}%' OR name LIKE '%{keyword}%'");
 
-        $request = new Request([], [], ['keyword' => 'test']);
+        $request = new Request(query: ['keyword' => 'test']);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -232,21 +202,15 @@ class ListerTest extends TestBootstrap
         $this->assertCount(1, $lister->getActiveFilters());
     }
 
-    /**
-     * Filter is applied with raw query with search keyword as array
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_applies_filters_with_raw_query_for_input_array()
+    public function test_it_applies_filters_with_raw_query_for_input_array()
     {
-        User::create([
+        User::forceCreate([
             'email' => "test1@mail.com",
             'name' => "test1",
             'password' => "123456",
         ]);
 
-        User::create([
+        User::forceCreate([
             'email' => "test2@mail.com",
             'name' => "test2",
             'password' => "123456",
@@ -265,7 +229,7 @@ class ListerTest extends TestBootstrap
         $filter = ListerFilter::textfield("keyword", "Email")
             ->setRawQuery("email IN ({keyword})");
 
-        $request = new Request([], [], ['keyword' => ['test1@mail.com', 'test2@mail.com']]);
+        $request = new Request(query: ['keyword' => ['test1@mail.com', 'test2@mail.com']]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -277,15 +241,9 @@ class ListerTest extends TestBootstrap
         $this->assertCount(1, $lister->getActiveFilters());
     }
 
-    /**
-     * Raw filter is applied
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_applies_raw_filters()
+    public function test_it_applies_raw_filters()
     {
-        User::create([
+        User::forceCreate([
             'email' => "test1@mail.com",
             'name' => "test1",
             'password' => "123456",
@@ -311,11 +269,7 @@ class ListerTest extends TestBootstrap
         $this->assertCount(1, $lister->getActiveFilters());
     }
 
-    /**
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_doesnt_apply_filter_for_empty_request()
+    public function test_it_doesnt_apply_filter_for_empty_request()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -335,7 +289,7 @@ class ListerTest extends TestBootstrap
             ->setDbColumn("email")
             ->setSearchOperator("LIKE");
 
-        $request = new Request([], [], ['filter_email' => '']);
+        $request = new Request(query: ['filter_email' => '']);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -347,7 +301,7 @@ class ListerTest extends TestBootstrap
         $this->assertFalse($listing->isFiltered());
     }
 
-    public function testWhereFilterMultipleLines()
+    public function test_where_filter_multiple_lines()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -366,7 +320,7 @@ class ListerTest extends TestBootstrap
             ],
         ];
 
-        $request = new Request([], [], ['filter_email' => '']);
+        $request = new Request(query: ['filter_email' => '']);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $listing = $lister->make($query_settings)->get();
@@ -374,13 +328,7 @@ class ListerTest extends TestBootstrap
         $this->assertFalse($listing->isFiltered());
     }
 
-    /**
-     * Check filters are applied for numberic filters, including zero (0) number
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function it_filters_for_zero_number()
+    public function test_it_filters_for_zero_number()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -394,7 +342,7 @@ class ListerTest extends TestBootstrap
 
         $numeric_filter = ListerFilter::textfield("filter_id", "ID")->setDbColumn("id");
 
-        $request = new Request([], [], ['filter_id' => 0]);
+        $request = new Request(query: ['filter_id' => 0]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -405,13 +353,7 @@ class ListerTest extends TestBootstrap
         $this->assertTrue($listing->isFiltered());
     }
 
-    /**
-     * Filters work for input type array
-     *
-     * @test
-     * @throws \ErrorException
-     */
-    public function filters_are_applied_for_input_array()
+    public function test_filters_are_applied_for_input_array()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -431,7 +373,7 @@ class ListerTest extends TestBootstrap
             ->setDbColumn("id")
             ->setSearchOperator("IN");
 
-        $request = new Request([], [], ['filter_id' => [1, 2]]);
+        $request = new Request(query: ['filter_id' => [1, 2]]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -447,8 +389,15 @@ class ListerTest extends TestBootstrap
         $this->assertEquals([1, 2], $active_filters->first()->getSearchKeyword());
     }
 
-    public function testDifferentConnectionByName()
+    public function test_different_connection_by_name()
     {
+        $user = new User();
+        $user->setConnection('other_conn');
+        $user->email = "test1@mail.com";
+        $user->name = "test1";
+        $user->password = "123456";
+        $user->save();
+
         $query_settings = [
             'fields' => "users.*",
 
@@ -462,11 +411,18 @@ class ListerTest extends TestBootstrap
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
         $listing = $lister->setConnection('other_conn')->make($query_settings)->get();
 
-        $this->assertTrue($listing->getResults()->count() > 1);
+        $this->assertTrue($listing->getResults()->count() === 1);
     }
 
-    public function testDifferentConnectionByObject()
+    public function test_different_connection_by_object()
     {
+        $user = new User();
+        $user->setConnection('other_conn');
+        $user->email = "test1@mail.com";
+        $user->name = "test1";
+        $user->password = "123456";
+        $user->save();
+
         $query_settings = [
             'fields' => "users.*",
 
@@ -480,10 +436,10 @@ class ListerTest extends TestBootstrap
         $lister = new Lister($this->app->make(Request::class), $this->app->make(Connection::class));
         $listing = $lister->setConnection(DB::connection('other_conn'))->make($query_settings)->get();
 
-        $this->assertTrue($listing->getResults()->count() > 1);
+        $this->assertTrue($listing->getResults()->count() === 1);
     }
 
-    public function testRecordsAreHydratedIfModelSet()
+    public function test_records_are_hydrated_if_model_is_set()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -505,12 +461,7 @@ class ListerTest extends TestBootstrap
         }
     }
 
-    /**
-     * Total number of rows must work fine for groupping
-     *
-     * @test
-     */
-    public function for_group_by_it_return_correct_total()
+    public function test_for_group_by_it_return_correct_total()
     {
         $query_settings = [
             'fields' => "r.*, COUNT(r.id)",
@@ -527,7 +478,7 @@ class ListerTest extends TestBootstrap
             'model' => Role::class,
         ];
 
-        $request = new Request([], [], ['rpp' => 3]);
+        $request = new Request(query: ['rpp' => 3]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $listing = $lister->make($query_settings)->get();
@@ -540,13 +491,9 @@ class ListerTest extends TestBootstrap
 
     /**
      * Currently, when fetching total records for query, Lister is removing all select fields and replacing them with COUNT(*) as total
-     *
      * This leads to query errors when joining tables which have same column names and current sort key is one of them
-     *
-     * @test
-     * @throws \ErrorException
      */
-    public function it_not_throws_exception_when_fetching_total_records_caused_by_ambiguous_column_name_in_order_by_clause()
+    public function test_it_not_throws_exception_when_fetching_total_records_caused_by_ambiguous_column_name_in_order_by_clause()
     {
         $query_settings = [
             'fields' => "u.*",
@@ -561,7 +508,7 @@ class ListerTest extends TestBootstrap
             ],
         ];
 
-        $request = new Request([], [], ['page' => 3]);
+        $request = new Request(query: ['page' => 3]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)->get();
@@ -569,28 +516,23 @@ class ListerTest extends TestBootstrap
         $this->assertTrue(true);
     }
 
-    /**
-     * Total number of rows must work fine for groupping
-     *
-     * @test
-     */
-    public function filter_with_having_for_group_by()
+    public function test_filter_with_having_for_group_by()
     {
-        $user = User::create([
+        $user = User::forceCreate([
             'email' => "test2@mail.com",
             'name' => "test2",
             'password' => "123456",
         ]);
 
-        $role1 = Role::create([
+        $role1 = Role::forceCreate([
             'name' => "role1",
         ]);
 
-        $role2 = Role::create([
+        $role2 = Role::forceCreate([
             'name' => "role2",
         ]);
 
-        $role3 = Role::create([
+        $role3 = Role::forceCreate([
             'name' => "role3",
         ]);
 
@@ -619,7 +561,7 @@ class ListerTest extends TestBootstrap
         $role_filter = ListerFilter::textfield("role_name", "Role name")
             ->setSearchOperator("LIKE");
 
-        $request = new Request([], [], ['role_name' => "role2"]);
+        $request = new Request(query: ['role_name' => "role2"]);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)
@@ -633,10 +575,7 @@ class ListerTest extends TestBootstrap
         $this->assertStringContainsString('role2', $results->first()->role_name);
     }
 
-    /**
-     * @test
-     */
-    public function it_doesnt_apply_select_filter_with_undefined_index_in_items()
+    public function test_it_doesnt_apply_select_filter_with_undefined_index_in_items()
     {
         $query_settings = [
             'fields' => "users.*",
@@ -655,7 +594,7 @@ class ListerTest extends TestBootstrap
                 'test2' => 'test 2',
             ]);
 
-        $request = new Request([], [], ['filter_user' => 'test3']);
+        $request = new Request(query: ['filter_user' => 'test3']);
 
         $lister = new Lister($request, $this->app->make(Connection::class));
         $lister->make($query_settings)->addFilter($select_filter);
@@ -664,14 +603,14 @@ class ListerTest extends TestBootstrap
         $this->assertCount(0, $lister->getActiveFilters());
     }
 
-    public function it_throws_lister_exception()
+    public function test_it_throws_lister_exception()
     {
         $this->expectException(ListerException::class);
 
         $query_settings = [
             'fields' => "users.*",
 
-            'body' => "FROM users {filters}",
+            'body' => "FROM unknown_table {filters}",
 
             'sortables' => [
                 'name' => 'asc',

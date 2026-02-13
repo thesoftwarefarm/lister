@@ -1,14 +1,13 @@
 <?php
 
-namespace TsfCorp\Lister\Test;
+namespace TsfCorp\Lister\Tests;
 
 use Exception;
 use TsfCorp\Lister\Facades\ListerFilter;
 
-class RawFilterTest extends TestBootstrap
+class RawFilterTest extends TestCase
 {
-    /** @test */
-    function no_render()
+    function test_no_render()
     {
         $filter = ListerFilter::raw("query")
             ->setLabel("test")
@@ -18,20 +17,14 @@ class RawFilterTest extends TestBootstrap
         $this->assertEmpty($filter);
     }
 
-    /**
-     * @test
-     */
-    function it_throws_error_if_property_are_not_set()
+    function test_it_throws_error_if_property_are_not_set()
     {
         $this->expectException(Exception::class);
 
         ListerFilter::raw("test")->validate();
     }
 
-    /**
-     * @test
-     */
-    function no_errors_if_render_is_false()
+    function test_no_errors_if_render_is_false()
     {
         $result = ListerFilter::raw("test")->noRender()->validate();
         $this->assertTrue($result);
