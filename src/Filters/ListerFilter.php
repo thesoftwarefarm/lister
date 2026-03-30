@@ -8,6 +8,7 @@ abstract class ListerFilter
 {
     public const TYPE_INPUT = "input";
     public const TYPE_SIMPLE_SELECT = "simple-select";
+    public const TYPE_MULTIPLE_SELECT = "multiple-select";
     public const TYPE_GROUP_SELECT = "group-select";
     public const TYPE_CHECKBOX = "checkbox";
     public const TYPE_RADIO = "radio";
@@ -31,9 +32,22 @@ abstract class ListerFilter
         return TextfieldFilter::make($input_name, $label, $db_column);
     }
 
+    /**
+     * @deprecated Use simpleSelect()
+     */
     public static function select(string $input_name, string $label = '', string $db_column = '')
     {
+        return self::simpleSelect($input_name, $label, $db_column);
+    }
+
+    public static function simpleSelect(string $input_name, string $label = '', string $db_column = '')
+    {
         return SimpleSelectFilter::make($input_name, $label, $db_column);
+    }
+
+    public static function multipleSelect(string $input_name, string $label = '', string $db_column = '')
+    {
+        return MultipleSelectFilter::make($input_name, $label, $db_column);
     }
 
     public static function groupSelect(string $input_name, string $label = '', string $db_column = '')
