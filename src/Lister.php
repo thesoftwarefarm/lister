@@ -442,6 +442,16 @@ class Lister
 
     public function rememberFilters(): string|bool
     {
+        $should_remember_filters = true;
+
+        if($this->request->has('remember_filters') && !$this->request->input('remember_filters')) {
+            $should_remember_filters = false;
+        }
+
+        if(!$should_remember_filters) {
+            return false;
+        }
+
         $uri = $this->request->path();
 
         $remembered = Session::get("filters.{$uri}");
